@@ -1,0 +1,175 @@
+
+[00:00] SPEAKER_05:
+que van a tener que mirar, que es este que se llama Unefficient Secrets of the Human-Shared King, que es un saco de suerte, que están hechos por estas personas de la Universidad China de Taipei. 
+[00:17] SPEAKER_01:
+Bueno, la cuestión es que en qué consiste CPEFAR. O sea, vamos a hacer la implementación de CPEFAR, ¿está bien? Con una pequeña adaptación nuestra, que ahora vamos a ver de qué se trata. La idea es que ustedes van a tener una imagen secreta y la imagen esa la van a distribuir. Bueno, ¿se acuerdan que el otro día lo vimos, no? O sea, cuando nosotros tenemos un esquema de secreto umbral, nosotros tenemos un esquema TN, donde T es la cantidad mínima de sombras que se necesita para recuperar el secreto. y n es el total de sombras que repartimos. Entonces, a partir de la imagen secreta se van a generar varias n sombras. Que en realidad son píxeles. Como el algoritmo que hace el paper genera esas sombras pero terminan siendo cosas extrañas sin ningún sentido, mientras que esta es una imagen que se puede ver bien, para que esto tenga un sentido más interesante lo que vamos a hacer es que estas sombras las vamos a ocultar en una portadora. cada una de estas la vamos a meter en una portadora y entonces nosotros acá vamos a ver una imagen que se entiende pero que adentro tiene la sombra secreta o sea que vamos a estar utilizando secreto compartido que es especialmente lo que dice el paper más este ganografía que la esteganografía es ocultar algo de manera que quede imperceptible ¿sí? entonces lo que vamos a hacer probablemente es ocultar los bits acá en una imagen que tenga suficiente espacio como para que estos bits que yo los vaya sacando de a uno y los ponga un bit en un byte de la cortadora ¿sí? Bueno, vamos a ver Entonces, tenemos Que estamos introduciendo El campo de la criptografía visual Criptografía de visuales, en general, todo lo que tenga que ver Con secreto compartido Aplicado de imágenes Y después, el campo de la Esteganografía, ¿sí? Que es la parte de ocultar para ser imperceptible ¿Sí? Para que el mensaje no parezca Que tenga otro mensaje adentro ¿Está? Bien, entonces El programa lo van a tener que hacer en C o en Java, convenientemente. ¿Por qué? Porque además van a estar tocando bits y a un poco bajo de nivel. Entonces va a convenir hacerlo en C o en Java. Nada más. 
+[03:29] SPEAKER_00:
+¿Puede usarse Rastro o no? No. 
+[03:35] SPEAKER_01:
+Aparte les voy a dar una implementación por una tabla de permutaciones. Bueno, entonces, ¿el programa qué es lo que va a permitir? dada una imagen secreta de extensión BMP, vamos a trabajar con imágenes BMP porque son las que son más fáciles de o sea, no están comprimidas o sea, yo agarro el pixel y es el byte, es ese pixel ya está, entonces vamos a trabajar igual con imágenes en blanco y negro bueno, la cuestión es que entonces dada una imagen, el programa me tiene que permitir generar entonces las sombras y guardarlas en otras imágenes BMP y por otro lado entonces esa parte la vamos a llamar el embebido y segunda parte, la parte de extracción la parte de extracción a mi me dan un conjunto de imágenes esas imágenes les voy a sacar el secreto que tiene, o sea los píxeles que estaban ocultos por esta iconografía y con eso voy a recuperar el secreto que es la imagen secreta. Entonces, bueno, después esto se lo leen todos, de qué se trata la criptografía visual, quién lo empezó, todo eso. Hay algunos documentos que tienen para mirar, para entender un poco más todos estos temas. Están subidos en la misma carpeta. Y entonces, bueno, como les decía, detalles del sistema. El programa entonces tiene que poder permitir o distribuir o recuperar. ¿Sí? Entonces, D es para distribuir, R para recuperar. Secret es la imagen secreta y K es el número de sombras que necesito. ¿Sí? Parámetros opcionales, N y DIR. ¿Sí? donde entonces K es el número mínimo de sombras necesarias para recuperar el secreto N es el número total de sombras que quiero armar ¿si? porque ¿qué pasa? K me va a decir vamos a con esto armar polinomios como vimos la otra vez entonces K me va a decir de que lado son los polinomios ¿está? ahora vamos a ver y entonces bueno, después de que ocultamos de que generamos las sombras va a haber la parte en la distribución vamos a tener que tener en cuenta algunas cuestiones primero, el valor de K 
+[06:19] SPEAKER_02:
+a ver, nosotros vamos a estar trabajando 
+[06:22] SPEAKER_01:
+entonces con una imagen secreta la idea es que el valor de K va a tener que ver con el polinomio con el polinomio que vamos a tener que armar. Entonces, el polinomio le vamos a poner ese grado. Ahí está. Entonces vamos a tener a sub cero más a sub uno x más bb a sub kx a la k. Entonces, esos coeficientes a sub cero, a sub uno, etc. son los que vamos a sacar de la imagen secreta. Entonces, la imagen secreta cada byte es un píxel. Si yo tengo que el esquema es K, entonces lo que voy a tener que hacer es, por ejemplo, si fuera K igual a 3. ¿Sí? Entonces, yo voy a ir tomando de a 3 los píxeles y voy a armar un polinomio. ¿Sí? En realidad sería... Si tomo 3, el polinomio va a quedar de lado K menos 1. Si yo tomo 3 píxeles, el problema va a quedar a sub 0 más a sub 1x más a sub 2x cuadrado. ¿Está bien? Este a sub 0 va a ser este byte, este a sub 1 va a ser este byte, este a sub 2 va a ser este byte. ¿Está? Entonces, ¿cómo se van a armar las sombras? Sombras puedo armar desde 3 hasta las que quiera. Entonces, ¿cómo las vamos a armar? Escribiendo. por ejemplo, quiero armar 5 sombras ¿si? entonces, una vez que yo ya tengo este polinomio armado ¿si? una vez que tengo este polinomio lo único que hago es reemplazar en el polinomio por 1, por 2, por 3 por 4, por 5 y el número que me da es parte ya del secreto ¿si? este sería, entonces, o este pixel iría a una de las imágenes secretas, una sombra Este va a ir a otra Este va a ir a otra Este va a ir a otra Y este va a ir a otra ¿Está bien? Ahora supónganse que yo leo los siguientes 3 bytes Leo los siguientes 3 Armé un segundo polinomio Entonces supongamos que a este lo llame S1 Vamos a hacer Y todas estas serán las sombras S1 Esa sería la sombra S1, 1 Esta sería la sombra S2, 1 esa sería la sombra de C3, C4, C1 Ana ¿qué? 
+[09:06] SPEAKER_02:
+una pregunta, los As serían 
+[09:09] SPEAKER_01:
+son bytes que van a ser píxeles de la imagen 
+[09:14] SPEAKER_02:
+y cuando vos haces una sombra el output, o sea si tenés tres píxeles con los que estás trabajando y haces cinco sombras, ¿cuáles son los cinco píxeles que salieron? o son píxeles nuevos, digamos 
+[09:26] SPEAKER_01:
+suponete que vos tengas acá 50, 51 y 55 ¿Sí? Entonces, 1 por 50 Más 51 por 50 más 51 por 1 Esa es la especialización del polinomio Para el 1 Te va a dar un número Que lo vas a reducir Módulo 257 Ahora vamos a ver ese tema ¿Sí? Después, haces lo mismo con el 2 50 más 51 por 2 más 55 por 2 al cuadrado te da un resultado. Ese resultado lo reducís módulo 257. Después haces con 3 50 más 51 por 3 más 55 por 3 al cuadrado te da un número, hacer el número lo reducís módulo 257. Y así lo haces con todos los números que vos quieras. ¿Sí? Eso por un lado. Supuestamente vos tenés este primer píxel del secreto. Después vos agarrás 3 más Y generás un segundo polinomio Con el que te dé No sé 60 más 61X cuadrado X más 60X cuadrado ¿Sí? Entonces con ese polinomio armás El segundo byte de cada una de las sombras Entonces con el 1 reemplazás Y te da un número Entonces vas a tener la sombra 1, 2 Esta va a ser la sombra 2, 2 Este va a ser el píxel de la sombra Entre 2 y 16 Siempre reduciendo módulo Módulo 2 ¿Qué pasa? Vos cada 3 estás generando 1 Si hiciéramos con k igual a 8 Cada 8 generamos 1 Se reduce como en este caso a la tercera parte Y si es 8 a la octava parte ¿Qué pasa? Esto que estamos generando acá Como son cuentas rara, o sea, son cuentas que no tienen un sentido entonces cuando yo arme la imagen con esto, me va a quedar algo que no se va a entender nada entonces, ahí viene la parte donde nosotros vamos a meter esto en una portadora si K es 8 quiere decir que el tamaño que teníamos originalmente supónganse que la imagen secreta tenía tamaño M cada sombra ¿qué tamaño tiene? va a tener tamaño de M sobre 8 entonces lo que vamos a hacer es vamos a usar una portadora del mismo tama de la imagen secreta si entonces este pixel lo vamos a dividir en cada uno de sus 7 mejor dicho 8 bytes y lo vamos a ir metiendo en la portadora un bit en el primer byte de la portadora el segundo bit en el segundo byte de la portadora el tercer bit en el tercer byte de la portadora y así sucesivamente ¿si? entonces esta portadora me sirve como esto, lo vuelvo a expandir a 8 el tamaño coincide ¿está bien? la cuestión es que entonces ahí en la portadora, como la portadora solamente está modificando 
+[13:00] SPEAKER_02:
+el último bit de cada byte la portadora puede ser una imagen en cualquiera, una casita, lo que quiera, y va a ser imperceptible que yo le haya insertado 
+[13:13] SPEAKER_01:
+8 bits nuevos, un bit en la parte menos significativa de cada byte. No se va a ver. Se va a quedar imperceptible. Entonces yo voy a ver 8 imágenes que parecen ser imágenes comunes, pero que si yo me voy fijando los bits menos significativos de cada uno, voy a ir armando las sombras que corresponden a la imagen secreta. Entonces voy a necesitar tantas portadoras como... Si acá yo quiero armar, no sé, cinco sombras, bueno, voy a necesitar cinco portadoras. 
+[13:49] SPEAKER_02:
+No va al tema mi pregunta, pero si vos agarraras la imagen portadora, ¿no podrías darte cuenta que todos los bytes tienen un bit que no está cambiando la imagen en absoluto? 
+[13:59] SPEAKER_01:
+No te das cuenta. 
+[14:00] SPEAKER_00:
+al ser humano no se come salvo que 
+[14:04] SPEAKER_01:
+lo único que podría llegar a pasar es que si vos ocuparas una parte muy pequeñita y estuvieras en lugar tocando un byte de a 4 bits en lugar de a 1 bit de a 4 bits y lo haces en una parte, si pero si vos estás tocando de a 1 bit y eso está como ocupando casi todo y en casi todos estás tocando 1 bit, salvo que tengas la cortadora original y la compares te da lo mismo, no lo ves 
+[14:29] SPEAKER_02:
+ok 
+[14:30] SPEAKER_01:
+Bueno, entonces el algoritmo consiste esencialmente en lo siguiente ¿Estamos? ¿Qué cosas va a haber que tener en cuenta? Bueno, acá dice el valor de K debe ser mayor o igual que 2 Y menor o igual que 10 ¿Sí? Para no hacer muchos casos Por otro lado, tenemos que el caso este como que ser más Simple Porque si K es igual a 8 Dijimos la portadora la hago del mismo tamaño Y es un bit Por píxel ¿Sí? ¿Qué pasa si K es igual a 3? Esto se me reduce a la tercera parte Entonces la portadora a lo mejor no puede ser del mismo tamaño Bueno, ahí lo van a tener que pensar ustedes Y ya, tomar una decisión 
+[15:20] SPEAKER_02:
+¿Qué van a hacer? 
+[15:22] SPEAKER_01:
+Si K no es 8 
+[15:23] SPEAKER_02:
+Si es menos que 8 o si es más que 8 
+[15:26] SPEAKER_01:
+Por otro lado, bueno, la imagen, ustedes van a trabajar en la imagen secreta únicamente en la parte de los píxeles. O sea, después del encabezado viene el cuerpo del BMP. En la parte del cuerpo del BMP van a tener que fijarse, que es algo que se nos dice el encabezado, dónde empiezan realmente los píxeles. O sea, dónde está la parte de la imagen estil de los bytes de colores. entonces, lo que a nosotros nos interesa es que, por un lado lo que nosotros estamos agarrando acá solamente tiene que ver con los píxeles y lo que vamos a insertar acá también tiene que ver solamente con los píxeles o sea que el encabezado, en principio no lo tocaríamos así que es muy importante que primero trabajen y se fijen cómo funciona el BMP y cómo encontrar el valor donde realmente empieza la parte de los píxeles. ¿Sí? Eso se van a tener que fijar. ¿Ven? Esto que dice acá. Leer bien el valor que indica en qué offset empieza la matriz de píxeles. ¿Sí? Ya que puede comenzar inmediatamente después de los 54 bytes o tener margen y empezar más adelante. ¿Sí? En el encabezado hay algunos bytes que no se utilizan entonces nos van a servir para guardar algunas cosas, porque son bytes que normalmente no se leen entonces ahora vamos a ver que hacemos con esos habla de una tabla de permutación, el algoritmo para la tabla de permutación tienen que un documento que les explica como hacer la implementación tanto en C como en Java para que se corresponda con lo que dice el paper. Bueno, entonces, el esquema 8N, por ejemplo, que es lo que vimos recién. Si yo tengo entonces un esquema con K igual a 8, las imágenes, entonces, conviene que tengan el mismo ancho y alto que la imagen secreta. Porque entonces, cuando a mí me den las portadoras con el secreto, yo recupero con ellas y si no tuviera el tamaño, tendrá que adivinar cuál es el tamaño de la imagen secreta, porque el encabezado yo no lo oculté. Entonces, como tengo esa ventaja de que puedo utilizar portadoras que son del mismo tamaño que la imagen secreta, ahí puedo copiar el encabezado de las portadoras y usarlo para la imagen secreta. Y los píxeles van a ser lo que corresponda según lo que se haya recuperado. Entonces ahí termino de recuperar toda la imagen. acá ven como viene la parte de ocultar 
+[18:21] SPEAKER_02:
+ahora 
+[18:22] SPEAKER_01:
+tengo que ocultar también dos cosas más vieron que nosotros acá dijimos bueno yo generé con el valor 1 estos valores, estos píxeles con el 2 estos píxeles con el 3 cuando reemplace estos píxeles o sea que todos los píxeles que están acá consisten en haber reemplazado los correspondientes polinomios siempre con 1 este siempre con 2, este siempre con 3 y así, entonces de alguna manera yo en la portadora tengo que guardar si, cual sombra era, si era la número 1 o si era la número 2 o si era la número 3, etc ¿si? entonces eso lo vamos a guardar en uno de los píxeles que no estábamos usando ¿si? Como solamente vamos a usar valores entre el 1 y el 10, no es un número muy grande que tengo que guardar. ¿Sí? Entonces, lo vamos a ocultar en los bytes 8 y 9. Por ejemplo, si la sombra es la número 1, bueno, acá tendrá que quedar 0, 0, 1. ¿Sí? Si la sombra, por ejemplo, es la tercera sombra, como la tercera sombra es 1, 1, acá en lugar de tener el byte 8 y 9 como están habitualmente que son 0 y 0 acá va a decir 13 y acá va a decir 0 
+[19:50] SPEAKER_02:
+y acá 
+[19:54] SPEAKER_01:
+va a haber necesidad vieron que les hablé de una tabla de permutación esa tabla de permutación usa una raíz una semilla de permutación entonces la semilla de la teoría la tengo que guardar en algún lado entonces para guardarla en algún lado vamos a usar los bytes 6 y 7 ¿está? 
+[20:12] SPEAKER_05:
+Cuando el esquema es distinto de 8, van a tener que fijarse ustedes qué decisión tomar respecto a las portadoras. 
+[20:24] SPEAKER_01:
+Si van a considerar una portadora más grande, una portadora más chica, qué relación van a armar. Pueden hacer que en lugar de guardarse de a un bit por vez, se guarden de a 4. Y sobre lugar o no sobre lugar. Ahí se fijan ustedes, eso queda aquí. después bueno, después viene el algoritmo de recuperación bien, ahora, antes de ir con el algoritmo de recuperación tenemos un temita acá acá dice módulo 257 si es módulo 257 ¿qué rango de valores abarca el módulo 257? 
+[21:02] SPEAKER_02:
+0 a 256 
+[21:02] SPEAKER_01:
+de 0 a 256 ¿sí? y los bytes en realidad ¿qué valores tienen? 
+[21:10] SPEAKER_00:
+0,255 
+[21:11] SPEAKER_01:
+0,255 entonces hay otros métodos que usan módulo 251 tanto 251 como 257 son números primos ¿está bien? entonces para todas las operaciones miren, no más bien pero, si yo uso 251 ¿qué problema tengo? 
+[21:34] SPEAKER_02:
+no podés representar 
+[21:35] SPEAKER_01:
+claro, no voy a poder representar todo, ¿sí? Porque ahí mi rango de valores va a ser de 0 a 250. Entonces ahí no puedo usar el 251, el 252 y ahí me quedan muchos valores sin representar. Entonces, esto, en lugar de hacerlo así, porque se pierden muchos, se opta por esto. Pero, ¿qué pasa? Cuando a mí me dé 256 alguna cosa, lo voy a tener que arreglar, porque no puedo tener 256, ¿sí? porque sería como tener un 0 entonces cada vez que acá salga 256 este polinomio va a tener que cambiarse, o sea si a mi con el 1 esta es la parte más real porque a mi si por ejemplo con el 1 me diera 256 voy a tener que modificar este número 50 y le voy a poner 51 y voy a recalcular todos otra vez si en alguno de estos me quedó otra vez cero, tengo que volver así hasta que me quede un polinomio que para todas las sombras me dé un valor distinto de 2,50 ¿está? entonces cuando hagamos la recuperación ¿va a ser exacta la recuperación? 
+[22:56] SPEAKER_03:
+no, si en alguno te digo 2,56 
+[22:58] SPEAKER_01:
+si yo acá tuve que tocar algo cuando yo recupere, ya no voy a recuperar 50 voy a recuperar 51 eso se los dejo para que lo analicen entonces, en la recuperación es lo que van a necesitar tener bueno, el directorio con las sombras tienen que saber cuál es el valor de k y qué criterios utiliza según si es 8 o si es distinto de 8 y empezar a hacer el algoritmo que vimos la otra vez o sea, ir tomando o sea, para la recuperación ¿qué es lo que voy a tener que fijarme? que tengo este polinomio que rearmar a partir, por ejemplo, de este byte, este byte y este byte entonces, por ejemplo, con este S1, S2, S3 recuperar esto después con este, este y este recupero esto, con todos los que voy recuperando, voy rearmando esto otra vez y eso lo vamos a hacer con el método que vimos la otra vez, pero yo les dije bueno, Gauss no es muy bueno, vamos a ver el de Lagrange. Bueno, ahora lo vamos a ver bien la versión que es más fácil. 
+[24:04] SPEAKER_02:
+¿Y qué más? 
+[24:09] SPEAKER_01:
+Bueno, la permutación se verifica de manera inversa, recuperan el secreto con el método de Gauss, y todas las operaciones que hacen, tanto en la distribución como en la recuperación, entonces son en módulo 2.57. Por lo tanto, se van a tener que hacer como una tablita de m 257 de multiplicaci de suma para recordar que siempre el inverso siempre que tienen que hacer una divisi es multiplicar por el inverso multiplicativo seg la tabla Y una vez que hacen todo, y van a tener unas imágenes que les vamos a dar acá de aquí, y a ver si las recuperan, van a tener que analizar algunas cuestiones con respecto a el paper, con respecto a si encuentran errores en el paper si encuentran cosas que son discutibles en el paper y cosas que mejorarían del algoritmo por ejemplo, nosotros acá estuvimos tomando decisiones de implementación como por el que no están en el paper por ejemplo, como lo íbamos a ocultar bueno, esas cosas como si ustedes la harían de otra manera, o por ejemplo nosotros decidimos ocultar el número de sombra en esos bytes, bueno, si se les ocurre hacerlo de otra forma bueno, que análisis hacen ustedes y los grupos bueno, la cuestión es que dudas hasta ahí vemos el algoritmo 
+[25:50] SPEAKER_02:
+de... 
+[26:20] SPEAKER_01:
+Bueno, después les vamos a armar entonces para que pongan los grupos y para que cuando se tenga que subir el trabajo los suban. Bueno, esto entonces después la miran bien. Hay dos documentos. Uno es este, que es el paper de verdad que tienen que utilizar, que es el que se llama... Es este, el paper. este es el paper pero como van a ver que todo el tiempo hace referencia al trabajo de Tien y Lin que son dos autores que hicieron el de 251 también lo tienen ahí por si lo quieren mirar, el de Tien y Lin ¿sí? que este como que les dio el punto de partida al otro ¿sí? por otro lado acá tienen como implementar esa tabla de permutación y lo tienen para hacer el lenguaje C para que todos nos den lo mismo porque si no estamos con una semilla pero si a uno le generan de una forma y a otro le generan de otra 
+[27:28] SPEAKER_02:
+y apunte sobre el secreto compartido 
+[27:34] SPEAKER_01:
+después es como algo general que está hecho ahí y acá es donde les vamos a poner para que puedan cargar la entrega si, si, eso es para cargar Sí, aparte hay que ver los grupos, hay que ver... Acá para... Ah, si esto queda asociado a lo mismo. Y acá vamos a ver entonces lo de Yamir. ¿Sí? ¿Qué es lo que le decía yo la otra vez? 
+[28:01] SPEAKER_02:
+No me puedo creer. Está bien, respeto. 
+[28:05] SPEAKER_01:
+Así le explico cómo se hace de esta manera. 
+[28:08] SPEAKER_02:
+Nunca pensé que podía estar en la entrevista. 
+[28:11] SPEAKER_01:
+Dice que dice versión 2. 
+[28:13] SPEAKER_02:
+Para mí es pura escribir. 25 clouds que ocupan todos. 
+[28:18] SPEAKER_01:
+Vamos a ver esto y a ver si... 
+[28:21] SPEAKER_02:
+8 de junio. 
+[28:28] SPEAKER_01:
+La idea es que después les voy a dar primero unos archivos de prueba para que prueben si el algoritmo está funcionando y después unos archivos definitivos que tienen una imagen secreta que tienen que descubrir. Entonces, vamos a ver cómo sería entonces este algoritmo. Yo tengo, por ejemplo, lo voy a hacer en Z11, que es más sencillo para verificar. Acá, estas cosas siempre, bueno, conviene a lo mejor verificarlas con pasos más chiquititos, lo de las imágenes por un lado, lo del algoritmo de recuperación por el otro, lo de Egoísmo-Custácea para juntar cuando se aseguran que funciona bueno, entonces yo acá tengo T igual a 3 entonces K igual a 3 entonces la idea es recuperar el polinomio P sub K con K igual a 3 y Gauss, Lagrange lo que me dice es que tengo que hacer una sumatoria desde i igual a 1 hasta k de distintos valores L sub i, que ahora vamos a ver que son, L sub i de x multiplicado por los i sub i, que los i sub i son estos de los son los son estos, no? 
+[30:32] SPEAKER_02:
+esa clase 
+[30:33] SPEAKER_01:
+y tenemos que los L sub i son los productos donde de i igual 1 hasta acá o j distinto de i Entonces nosotros vimos que si yo lo hago con VAUS normalmente bueno, me van apareciendo varias cosas con X o sea, esta parte me genera esto de X menos 1 sobre 2, X menos 5 sobre 2 menos 5 entonces hay que hacer toda la distributiva, etc. acá la idea es no trabajar con las X trabajar solo con números para que sea más cómodo para la implementación entonces en la versión esta vamos a hacer dos cuestiones entonces teniendo en cuenta lo siguiente yo tengo que entonces recuperar un polinomio de grado 3 o sea los tres coeficientes 
+[31:58] SPEAKER_05:
+el polinomio de grado 3 
+[32:04] SPEAKER_01:
+yo puedo escribirlo como S sub 3X cuadrado perdón, por qué me he dado 2 3 sombras por eso el problema es un grado menos se los pongo así porque es la notación que está en la presentación bien este es mi objetivo encontrar este polinomio por otro lado no sé si vieron en algebra la versión encajada de un polinomio que consiste en que yo acá, por ejemplo, saco la X de factor común y me quedo con S sub 3X más S sub 2 ahora vamos a ver cómo usamos eso pero en principio hay un facto acá que es el siguiente que si yo especializo en 0 sea lo que tenga en el polinomio ¿qué es lo que voy a obtener del polinomio? el término independiente o sea, me va a dar siempre ese sub 1 ¿sí? entonces, usando esto vamos a hacer todo esto, pero teniendo en cuenta que lo hacemos para x igual a 0 entonces, a ver, si yo tengo 
+[33:27] SPEAKER_03:
+esto 
+[33:28] SPEAKER_01:
+y sigo la formulita tendría que hacer 3 va a tener 3 términos va a tener un término L1 por I1 más el de L2 
+[33:46] SPEAKER_05:
+por I2 más L3 por I3 
+[33:53] SPEAKER_01:
+bien, I1, I2, I3 son estos 3, 19 
+[33:56] SPEAKER_05:
+pues acá pongo 3 10 y 9 
+[34:02] SPEAKER_01:
+y acá L1 en lugar de poner que sea para X voy a poner que sea para 0 entonces este X va a ser 0 y acá voy a tener solamente números entonces es más cómodo porque ya ahí me desapareció la X solamente tengo números entonces esto entonces lo hacemos para cero teniendo en cuenta la formulita entonces, ¿cómo es la formulita? bueno vamos a poner acá si j es distinto de i quiere decir que me van a quedar dos factores ¿verdad? o sea que tengo dos factores acá tengo dos factores pero van a ser solo números ¿sí? porque como esto vale cero Entonces vamos a tener Este es 3 Entonces 3 ¿Con qué se corresponde? Con este 1 Entonces acá va 1 Y acá ponemos los otros números 
+[35:07] SPEAKER_05:
+O sea 5 y 2 
+[35:09] SPEAKER_01:
+Y acá queda 5 
+[35:11] SPEAKER_05:
+Y acá queda 2 
+[35:12] SPEAKER_01:
+Después hacemos con este Si acá dice 10 ¿Quién le corresponde? 5 
+[35:17] SPEAKER_05:
+Entonces sería 
+[35:18] SPEAKER_01:
+5 y 5 y el resto de los otros números 1 y 2 1 y 2 y así el 9, ¿quién es el del 2? entonces acá hacemos 2 menos 2 menos y los otros números 1 y 5 entonces toda esta cuenta ya se hizo solo con números ¿está? se hace módulo 11 en este caso ¿sí? cuesta que entonces yo ya cuando armo todo esto, en realidad como estoy diciendo que x vale 0 ¿sí? cuando resuelvo toda esta cuenta, que es una cuenta numérica, me va a terminar dando que p sub 3 en 0 es igual a un número ¿sí? pero ese número entonces va a ser s sub 1, o sea que ya voy a tener este numerito calculado en este caso justo da 7 si no me creen lo califican si no me creen hacen todas las cuentas que estaban acá ven? ahí entonces hacen todas las cuentas ven que ya quedan cuentas m f porque aparte menos por menos ya da 10 Menos 4 por menos 2 Pues 1 es 4 Bueno, acá hay que usar el inverso de 4. Es 3 modulo 11. Bueno, se hacen todas las cuentas y me queda 7. Ese sumo 1 ya sé que vale 7. ¿Sí? Entonces, ahora lo que hay que hacer es tratar de trabajar ya no con todo ese polinomio. Ahora el próximo paso va a trabajar con este polinomio. 
+[37:13] UNKNOWN:
+¿Sí? 
+[37:13] SPEAKER_01:
+Pero para trabajar con ese polinomio tiene que calcular de vuelta las tres sombras para lo que le quedó. Y eso se hace así. En realidad no tres sombras, sino ya dos. Porque como ahora voy a querer recuperar... Porque el S1 ya lo tengo. O sea, ya vi que vale siete. 
+[37:35] UNKNOWN:
+¿Sí? 
+[37:36] SPEAKER_01:
+entonces, ahora me interesa sacar estos dos términos entonces, esos dos es como tratar de resolver el problema de la 1 por lo tanto, con dos sombras me alcanzaría entonces, lo que se hace es rearmar entonces, ahora nosotros tenemos P sub 3 X es igual a S sub 3X más S sub 2 que no lo conozco por X más 7 ¿Sí? Entonces vamos a recalcular las tres sombras. No las tres sombras. Voy a usar ahora dos. Por ejemplo, esta y esta. Con 1 y con 5. Entonces, con 1 y con 5. 
+[38:35] SPEAKER_05:
+Entonces... Entonces... 
+[38:41] SPEAKER_01:
+A ver, yo sabía que acá esto daba... 
+[39:00] SPEAKER_05:
+Para X igual a 1. S sub 3X más S sub 2 por X más 7 
+[39:11] SPEAKER_01:
+en principio daba 3 daba 3 originalmente bueno, ahora, como ya sabemos que este número es 7 vamos a despejar y va a quedar así es igual a 3 menos 7 y se dividiría por 1 o sea 3 es igual a 3 menos 7 sería menos 4 módulo 11, ¿cuánto queda? 
+[39:52] SPEAKER_00:
+7 
+[39:53] SPEAKER_01:
+entonces, el punto que vamos a considerar va a ser 1, 7 ¿si? en lugar de 1, 3 ahora las próximas cuentas las vamos a estar teniendo en cuenta 1, 7 y para x igual por ejemplo 
+[40:15] SPEAKER_02:
+5 hacemos lo mismo 
+[40:22] SPEAKER_01:
+entonces me queda S sub 3x más S sub 2 por x más 5 originalmente daba 10 no, perdón, acá es más 7 este 7 es el de este 7 es el que acabamos de calcular recién, ¿no? es el S1 este va a ser 7, acá tengo un 7 entonces, ahora despejamos acá y me queda 10 menos 7 me va a quedar 3 quiere decir que por x vale 5 entonces acá tendríamos 3 y este 5 lo vamos a estar dividiendo ¿qué significa dividir por por 5? tenemos que multiplicar por el inverso de 5 ¿Quién es? El inverso 3 por 9 3 por 9 sería 27 Bueno, 22 va a dar 10 Entonces, el próximo punto es Uno es este Y el otro es 5, 5 ¿Está? en realidad después cuando lo implementan es fácil, ¿por qué va a ser fácil? porque cada vez se va a hacer más chico o sea, yo empecé con 3 puntos ahora voy a seguir con 2 y después ya va a quedar 1, más ya de acá sale la solución y si yo tenía por ejemplo 8 sombras, voy a arrancar con 8, 7, 6, 5, 4 y se va haciendo cada vez más chico y el proceso siempre es el mismo o sea que después para implementarlo por ahí cuesta la primera vez, pero después cuando está bien implementado funciona rápido para todo y son solo números que estoy trabajando, no aparece ninguna x ni que me moleste ¿estamos? por lo tanto, ahora el procedimiento se repite con 1, 7, 5, 5 vamos a volver a hacer esto pero ya no tengo un polinomio tan grande tengo un polinomio que solamente tiene de grado 2 pasamos a grado 1 o sea acá va a ser P2 en 0 y vamos a poner L1 de 0 por I1 más L2 en 0 por I2, nada más ¿y quiénes son I1 y I2? estos son I1 y I2 7 y 5, los nuevos valores entonces acá vamos a tener 7 acá vamos a tener 5 y acá había dos factores porque estábamos en este grado 2, en cambio acá ya es grado 1, así que es un solo factor si acá puse el 7 que se correspondía con el 1 acá hago 1 menos el otro número y acá era 5 entonces acá es 1 menos 5, acá va menos 5 acá 5 menos 1 y acá va menos 1 se hace la cuenta y lo que estoy obteniendo es la especialización en el 0 por lo tanto P2, P0 ¿qué me va a estar dando? esto me va a estar dando este resultado ¿si? entonces ya voy a tener S2 entonces lo que me de acá que en este caso es 2 este número va a ser S2 y con ese sub 2 ya puedo resolver porque en realidad ya ni siquiera hace falta que vuelva a repetir el algoritmo porque con ese sub 2 acá puedo despejar esto cuando sé que x vale 1 ya se termina porque yo sé que p sub 2 en 1 me tenía que dar 7 y acá tenemos S sub 3 por 1 más 2 igual a 7 entonces ya sacamos que S sub 3 vale 5 
+[45:02] SPEAKER_05:
+una consulta más ahí cuando hiciste Px igual a 1 y Px igual a 5 la x que estaba al lado de S sub 3 ¿por qué no la quiseis? porque vos 
+[45:14] SPEAKER_01:
+si no te quedarían 2 sin cota ¿Masivos? ¿Armas el polinomio de Lagrange solamente para calcular para calcular S3? 
+[45:25] SPEAKER_04:
+Estamos especializando una sola porque nos conviene. 
+[45:31] SPEAKER_01:
+Claro, porque tenemos que sacarlo como resultado de todo. Porque tenemos que encontrar la solución para cualquier punto. 
+[45:46] SPEAKER_02:
+ya cuando llegamos acá 
+[45:51] SPEAKER_01:
+sí, porque ese es un 2 es el único término que tengo y ahí sí, para x y para 1 bueno, la cuestión es que entonces el proceso siempre se va achicando esa es la ventaja que tiene ya cuando están en el por en el grado 1 sacan el coeficiente del término de los dos términos que nos quedan. Esas son las dos. Y esa es una forma más fácil de... O sea, se puede hacer el algoritmo de una manera bastante fácil. Acuérdense siempre, todas las operaciones son modulares. O sea, tienen que armarse una tablita estática ahí en el programa para la multiplicación del módulo 257, en este caso. así van directo a ver cuál es el inverso y van rápido si no lo van achicando cada vez yo les diría que prueben estas cosas por separado una vez que funcionen y lo mismo con lo de los archivos BMP, experimentar con archivos BMP para saber si lo están leyendo bien y todo eso y después ya lo integran al algoritmo principal y el programa y después tener en cuenta igual les vamos a dar el orden en que leen las cosas el orden en que leen los bits el orden en que guardan los bits donde los guardan porque cualquier cosita mínima que esté diferente no lo va a ver si ya levantan algo mal del archivo le van a dar otra cosa ¿Está? Así que eso Sí van a tener que ver Pero bueno, después en todo caso ya le estamos Dando archivo La semana que viene o la otra Para que empiecen a A probar 
+[47:55] SPEAKER_02:
+P2 sería el polinomio que es nada más S3X más S2 
+[48:00] SPEAKER_01:
+P2 sub 0 es que vos A este polinomio más chiquito Que te quedó acá, este sería P2 Ok, gracias porque como que vos vas reduciendo tu objetivo empezó siendo descubrir todo el polinomio de este ahora acá tu objetivo pasó a ser p sub 2 x igual a s sub 3 x más s sub 2 ya está que ya acá no vas a estar la versión enquejada porque ya no tienes el tiempo pero si fuera que habías empezado por un problema más grande bueno, vas haciendo, vas achicándolo gracias bueno, y eso es todo ahora tienen que ir a grabar cosas 
+[48:58] SPEAKER_05:
+y me quiero un burrito 
