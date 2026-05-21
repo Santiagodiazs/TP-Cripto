@@ -1,1 +1,7 @@
 *.o
+sss
+sss_dbg
+tests/test_bmp
+tests/test_fase2
+tests/test_math_permutation
+tests/out_albert.bmp
