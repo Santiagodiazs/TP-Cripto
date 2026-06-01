@@ -6,18 +6,18 @@ Este plan desglosa cada fase en tareas específicas para C o Java, alineadas est
 **Objetivo:** Tener el esqueleto del programa y dominar el formato de imagen antes de meterse con la matemática.
 
 ### Tareas:
-- [ ] **Módulo CLI (Command Line Interface):**
-  - [ ] Implementar parseo estricto de parámetros, respetando mayúsculas y minúsculas.
-  - [ ] Soportar parámetros requeridos: `-d` (distribuir) o `-r` (recuperar), `-secret <imagen.bmp>`, `-k <numero>` (entre 2 y 10).
-  - [ ] Soportar parámetros opcionales: `-n <numero>` (mínimo 2), `-dir <directorio>`. 
-  - [ ] Lógica por defecto: Si no se usa `-dir`, buscar en el directorio actual. Si no se usa `-n`, inferir la cantidad leyendo las imágenes del directorio.
-  - [ ] Manejo de errores: Si hay un error de sintaxis, explicitar el error e informar la sintaxis correcta al usuario.
+- [x] **Módulo CLI (Command Line Interface):**
+  - [x] Implementar parseo estricto de parámetros, respetando mayúsculas y minúsculas.
+  - [x] Soportar parámetros requeridos: `-d` (distribuir) o `-r` (recuperar), `-secret <imagen.bmp>`, `-k <numero>` (entre 2 y 10).
+  - [x] Soportar parámetros opcionales: `-n <numero>` (mínimo 2), `-dir <directorio>`. 
+  - [x] Lógica por defecto: Si no se usa `-dir`, buscar en el directorio actual. Si no se usa `-n`, inferir la cantidad leyendo las imágenes del directorio.
+  - [x] Manejo de errores: Si hay un error de sintaxis, explicitar el error e informar la sintaxis correcta al usuario.
 
-- [ ] **Módulo BMP (Lectura/Escritura):**
-  - [ ] Validar que se trabaje estrictamente con imágenes BMP de 8 bits por píxel (escala de grises, 1 byte = 1 píxel).
-  - [ ] **Offset dinámico:** Leer el offset en el encabezado de 54 bytes para saber dónde empieza realmente la matriz de píxeles (no asumir que siempre es el byte 54).
-  - [ ] Controlar Endianness: Tener cuidado con la codificación Little/Big Endian al leer los bytes del encabezado.
-  - [ ] Lectura correcta: Procesar la matriz de píxeles (se lee de abajo hacia arriba y de izquierda a derecha).
+- [x] **Módulo BMP (Lectura/Escritura):**
+  - [x] Validar que se trabaje estrictamente con imágenes BMP de 8 bits por píxel (escala de grises, 1 byte = 1 píxel).
+  - [x] **Offset dinámico:** Leer el offset en el encabezado de 54 bytes para saber dónde empieza realmente la matriz de píxeles (no asumir que siempre es el byte 54).
+  - [x] Controlar Endianness: Tener cuidado con la codificación Little/Big Endian al leer los bytes del encabezado.
+  - [x] Lectura correcta: Procesar la matriz de píxeles (se lee de abajo hacia arriba y de izquierda a derecha).
 
 ---
 
@@ -25,16 +25,16 @@ Este plan desglosa cada fase en tareas específicas para C o Java, alineadas est
 **Objetivo:** Construir el "motor" criptográfico del sistema.
 
 ### Tareas:
-- [ ] **Módulo de Permutación:**
-  - [ ] Extraer la semilla (2 bytes) y ocultarla en los bytes reservados 6 y 7 del encabezado de la imagen portadora.
-  - [ ] Implementar *exactamente* el algoritmo de generación pseudoaleatoria provisto en la documentación (`Tabla de Permutacion Implementacion.pdf`). 
+- [x] **Módulo de Permutación:**
+  - [x] Extraer la semilla (2 bytes) y ocultarla en los bytes reservados 6 y 7 del encabezado de la imagen portadora.
+  - [x] Implementar *exactamente* el algoritmo de generación pseudoaleatoria provisto en la documentación (`Tabla de Permutacion Implementacion.pdf`). 
     - *En C:* Usar `setSeed(int64_t)` y `nextChar(void)` con variables de 48 bits.
-    - *En Java:* Instanciar `java.util.Random` con `setSeed` y `nextInt(256)`.
-  - [ ] Permutar todos los píxeles de la imagen secreta antes de dividirlos.
+    - *En Java:* Instanciar `java.util.Random` con `setSeed` and `nextInt(256)`.
+  - [x] Permutar todos los píxeles de la imagen secreta antes de dividirlos.
 
-- [ ] **Módulo Matemático GF(257):**
-  - [ ] Implementar aritmética modular en $Z_{257}$ (suma, resta, multiplicación).
-  - [ ] Implementar división modular calculando el inverso multiplicativo módulo 257. (Recomendación: precomputar una tabla estática `[257]` en el código para acelerar cálculos).
+- [x] **Módulo Matemático GF(257):**
+  - [x] Implementar aritmética modular en $Z_{257}$ (suma, resta, multiplicación).
+  - [x] Implementar división modular calculando el inverso multiplicativo módulo 257. (Recomendación: precomputar una tabla estática `[257]` en el código para acelerar cálculos).
 
 ---
 
@@ -42,19 +42,19 @@ Este plan desglosa cada fase en tareas específicas para C o Java, alineadas est
 **Objetivo:** Conectar la matemática y las imágenes para ocultar el secreto en portadoras.
 
 ### Tareas:
-- [ ] **Generación de Polinomios (Distribución):**
-  - [ ] Agrupar los píxeles permutados de a $k$ para formar polinomios de grado $k-1$.
-  - [ ] Asignar esos $k$ píxeles a **todos** los coeficientes del polinomio ($a_0, a_1, \dots, a_{k-1}$). No hay coeficientes aleatorios. Esto logra la compresión de sombras del paper de Thien & Lin: cada $k$ píxeles de secreto generan **1 solo byte** de sombra por evaluación.
-  - [ ] Evaluar el polinomio en $x=1, 2, ..., n$ para generar el byte (sombra) correspondiente a cada portadora.
-  - [ ] **Regla estricta del 256:** Si alguna evaluación arroja exactamente 256, alterar un coeficiente del polinomio (ej. $a_0 = (a_0 + 1) \bmod 256$) y recalcular todo el polinomio para TODAS las sombras hasta que ningún valor sea 256. Esto genera el ruido (lossy) esperado en la recuperación.
+- [x] **Generación de Polinomios (Distribución):**
+  - [x] Agrupar los píxeles permutados de a $k$ para formar polinomios de grado $k-1$.
+  - [x] Asignar esos $k$ píxeles a **todos** los coeficientes del polinomio ($a_0, a_1, \dots, a_{k-1}$). No hay coeficientes aleatorios. Esto logra la compresión de sombras del paper de Thien & Lin: cada $k$ píxeles de secreto generan **1 solo byte** de sombra por evaluación.
+  - [x] Evaluar el polinomio en $x=1, 2, ..., n$ para generar el byte (sombra) correspondiente a cada portadora.
+  - [x] **Regla estricta del 256:** Si alguna evaluación arroja exactamente 256, alterar un coeficiente del polinomio (ej. $a_0 = (a_0 + 1) \bmod 256$) y recalcular todo el polinomio para TODAS las sombras hasta que ningún valor sea 256. Esto genera el ruido (lossy) esperado en la recuperación.
 
-- [ ] **Embebido Esteganográfico (LSB Replacement):**
-  - [ ] Guardar el "número de sombra" ($x$ usado en el polinomio, ej. 1, 2... n) en los bytes reservados 8 y 9 de cada portadora.
-  - [ ] Ocultar los bytes de sombra generados particionándolos bit a bit y reemplazando el bit menos significativo (LSB) de los bytes de la matriz de píxeles de la portadora (comenzando desde el pixel offset).
+- [x] **Embebido Esteganográfico (LSB Replacement):**
+  - [x] Guardar el "número de sombra" ($x$ usado en el polinomio, ej. 1, 2... n) en los bytes reservados 8 y 9 de cada portadora.
+  - [x] Ocultar los bytes de sombra generados particionándolos bit a bit y reemplazando el bit menos significativo (LSB) de los bytes de la matriz de píxeles de la portadora (comenzando desde el pixel offset).
 
-- [ ] **Decisión Arquitectónica sobre Portadoras (Documentar):**
-  - [ ] *Si $k=8$:* Cada 8 píxeles de secreto → 1 byte de sombra. Para ocultarlo con LSB1 se necesitan 8 bytes de portadora. Resultado: portadoras del mismo tamaño que la imagen secreta.
-  - [ ] *Si $k \neq 8$:* La compresión es de $k$ a 1. Documentar en el informe cómo se manejan las portadoras y/o si se cambia a LSB2, LSB4, etc., para compensar la diferencia de tamaño.
+- [x] **Decisión Arquitectónica sobre Portadoras (Documentar):**
+  - [x] *Si $k=8$:* Cada 8 píxeles de secreto → 1 byte de sombra. Para ocultarlo con LSB1 se necesitan 8 bytes de portadora. Resultado: portadoras del mismo tamaño que la imagen secreta.
+  - [x] *Si $k \neq 8$:* La compresión es de $k$ a 1. Documentar en el informe cómo se manejan las portadoras y/o si se cambia a LSB2, LSB4, etc., para compensar la diferencia de tamaño.
 
 ---
 

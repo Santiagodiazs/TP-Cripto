@@ -4,4 +4,7 @@ sss_dbg
 tests/test_bmp
 tests/test_fase2
 tests/test_math_permutation
+tests/test_distribute
 tests/out_albert.bmp
+tests/carriers_test/
+tests/secret_test.bmp
