@@ -44,17 +44,17 @@ Este plan desglosa cada fase en tareas específicas para C o Java, alineadas est
 ### Tareas:
 - [ ] **Generación de Polinomios (Distribución):**
   - [ ] Agrupar los píxeles permutados de a $k$ para formar polinomios de grado $k-1$.
-  - [ ] Ocultar el secreto (el píxel de la imagen) en el término independiente ($a_0$).
-  - [ ] Evaluar el polinomio en $x=1, 2, ..., n$ para generar el píxel (sombra) correspondiente a cada portadora.
-  - [ ] **Regla estricta del 256:** Si alguna evaluación arroja exactamente 256, descartarla. Sumar 1 al coeficiente problemático (ej. $50 \rightarrow 51$) y recalcular todo el polinomio para TODAS las sombras hasta que ningún valor sea 256.
+  - [ ] Asignar esos $k$ píxeles a **todos** los coeficientes del polinomio ($a_0, a_1, \dots, a_{k-1}$). No hay coeficientes aleatorios. Esto logra la compresión de sombras del paper de Thien & Lin: cada $k$ píxeles de secreto generan **1 solo byte** de sombra por evaluación.
+  - [ ] Evaluar el polinomio en $x=1, 2, ..., n$ para generar el byte (sombra) correspondiente a cada portadora.
+  - [ ] **Regla estricta del 256:** Si alguna evaluación arroja exactamente 256, alterar un coeficiente del polinomio (ej. $a_0 = (a_0 + 1) \bmod 256$) y recalcular todo el polinomio para TODAS las sombras hasta que ningún valor sea 256. Esto genera el ruido (lossy) esperado en la recuperación.
 
 - [ ] **Embebido Esteganográfico (LSB Replacement):**
   - [ ] Guardar el "número de sombra" ($x$ usado en el polinomio, ej. 1, 2... n) en los bytes reservados 8 y 9 de cada portadora.
-  - [ ] Ocultar los píxeles generados en el bit menos significativo (LSB) de los bytes de la matriz de píxeles de la portadora.
+  - [ ] Ocultar los bytes de sombra generados particionándolos bit a bit y reemplazando el bit menos significativo (LSB) de los bytes de la matriz de píxeles de la portadora (comenzando desde el pixel offset).
 
 - [ ] **Decisión Arquitectónica sobre Portadoras (Documentar):**
-  - [ ] *Si $k=8$:* Usar portadoras con el mismo ancho y alto que la imagen secreta (1 bit de sombra por cada byte de portadora).
-  - [ ] *Si $k \neq 8$:* Definir, implementar y justificar la estrategia de tamaño de portadoras y método de ocultamiento (ej. empaquetar de a 4 bits / nibbles).
+  - [ ] *Si $k=8$:* Cada 8 píxeles de secreto → 1 byte de sombra. Para ocultarlo con LSB1 se necesitan 8 bytes de portadora. Resultado: portadoras del mismo tamaño que la imagen secreta.
+  - [ ] *Si $k \neq 8$:* La compresión es de $k$ a 1. Documentar en el informe cómo se manejan las portadoras y/o si se cambia a LSB2, LSB4, etc., para compensar la diferencia de tamaño.
 
 ---
 
