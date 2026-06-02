@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-Academic project (cryptography course). Currently only `docs/` exists — no source code yet. The reference material under `docs/` (especially `transcript_presentacion.txt` and `secret image sharing.pdf`) is the canonical spec; the implementation must conform to it.
+Academic project (cryptography course). Fully implemented command-line utility in C supporting both distribution (`-d`) and recovery (`-r`) modes. The reference material under `docs/` (especially `transcript_presentacion.txt` and `secret image sharing.pdf`) is the canonical spec; the implementation must conform to it. Unit tests and integration tests verify the cryptographic engine, permutations, GF(257) arithmetic, and LSB embedding/extracting round-trips.
 
 ## What this project implements
 

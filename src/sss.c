@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <dirent.h>
+#include <assert.h>
 #include "sss.h"
 #include "bmp.h"
 #include "math_gf257.h"
@@ -133,6 +134,28 @@ static void lsb_embed(uint8_t *carrier_pixels, const uint8_t *shadow,
             carrier_pixels[ci] = (carrier_pixels[ci] & clear) | bits;
             ci++;
         }
+    }
+}
+
+/**
+ * Extrae bytes de sombra desde los LSBs de los pixeles de la portadora.
+ * Orden MSB-first.
+ */
+static void lsb_extract(const uint8_t *carrier_pixels, uint8_t *shadow,
+                        uint32_t shadow_len, int lsb_count) {
+    uint8_t mask = (uint8_t)((1 << lsb_count) - 1);
+    int chunks_per_byte = 8 / lsb_count;
+    uint32_t ci = 0;
+
+    for (uint32_t si = 0; si < shadow_len; si++) {
+        uint8_t val = 0;
+        for (int g = 0; g < chunks_per_byte; g++) {
+            int shift = 8 - lsb_count * (g + 1);
+            uint8_t bits = carrier_pixels[ci] & mask;
+            val |= (uint8_t)(bits << shift);
+            ci++;
+        }
+        shadow[si] = val;
     }
 }
 
@@ -302,7 +325,205 @@ cleanup:
  * ================================================================ */
 
 int sss_recover(const Args *args) {
-    printf("[TODO] Recuperacion: secret='%s', k=%d, dir='%s'\n",
-           args->secret, args->k, args->dir);
-    return 0;
+    int ret = -1;
+    char **carrier_paths = NULL;
+    int carrier_count = 0;
+    BMPImage carriers[10];
+    uint16_t shadow_indices[10];
+    int active_count = 0;
+    uint8_t **shadows = NULL;
+    uint8_t *recovered_pixels = NULL;
+    BMPImage secret_out;
+
+    memset(carriers, 0, sizeof(carriers));
+    memset(shadow_indices, 0, sizeof(shadow_indices));
+    memset(&secret_out, 0, sizeof(secret_out));
+
+    int k = args->k;
+    const char *dir = args->dir;
+    const char *out_secret_path = args->secret;
+
+    /* 1. Escanear directorio de portadoras */
+    carrier_count = scan_bmp_files(dir, &carrier_paths);
+    if (carrier_count < 0) return -1;
+    if (carrier_count == 0) {
+        fprintf(stderr, "sss: no se encontraron archivos BMP en '%s'.\n", dir);
+        goto cleanup;
+    }
+
+    /* 2. Cargar portadoras validas unicas */
+    for (int i = 0; i < carrier_count && active_count < k; i++) {
+        BMPImage img;
+        memset(&img, 0, sizeof(img));
+        if (bmp_load(carrier_paths[i], &img) != 0) {
+            continue; /* Ignorar archivo no BMP u 8bpp invalido */
+        }
+        uint16_t shadow_num = bmp_get_shadow_num(&img);
+        if (shadow_num == 0 || shadow_num > 256) {
+            bmp_free(&img);
+            continue; /* Ignorar portadoras sin indice valido */
+        }
+        /* Verificar si ya cargamos una portadora con este shadow_num */
+        int duplicate = 0;
+        for (int j = 0; j < active_count; j++) {
+            if (shadow_indices[j] == shadow_num) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) {
+            bmp_free(&img);
+            continue;
+        }
+
+        /* Guardar portadora valida */
+        carriers[active_count] = img;
+        shadow_indices[active_count] = shadow_num;
+        active_count++;
+    }
+
+    if (active_count < k) {
+        fprintf(stderr, "sss: se necesitan al menos %d portadoras validas con indices de sombra unicos para recuperar, pero solo se encontraron %d.\n", k, active_count);
+        goto cleanup;
+    }
+
+    /* 3. Validar consistencia de dimensiones */
+    uint32_t width = carriers[0].width;
+    uint32_t height = carriers[0].height;
+    uint32_t M = carriers[0].pixel_count;
+
+    for (int i = 1; i < k; i++) {
+        if (carriers[i].width != width || carriers[i].height != height) {
+            fprintf(stderr, "sss: error, las portadoras no tienen las mismas dimensiones (%ux%u vs %ux%u).\n",
+                    width, height, carriers[i].width, carriers[i].height);
+            goto cleanup;
+        }
+    }
+
+    /* 4. Obtener semilla de la primera portadora */
+    uint16_t seed = bmp_get_seed(&carriers[0]);
+    printf("[SSS] Semilla extraida de la cabecera: 0x%04X\n", seed);
+
+    /* 5. Calcular longitud de sombra y comprobar capacidad */
+    int lsb_count = get_lsb_count(k);
+    uint32_t shadow_len = (M + (uint32_t)k - 1) / (uint32_t)k;
+    uint32_t pixels_needed = shadow_len * (uint32_t)(8 / lsb_count);
+
+    if (M < pixels_needed) {
+        fprintf(stderr, "sss: error, las portadoras tienen menor cantidad de pixeles que la necesaria para la sombra (%u < %u).\n", M, pixels_needed);
+        goto cleanup;
+    }
+
+    /* 6. Reservar memoria y extraer las sombras */
+    shadows = calloc((size_t)k, sizeof(uint8_t *));
+    if (!shadows) goto cleanup;
+    for (int i = 0; i < k; i++) {
+        shadows[i] = malloc(shadow_len);
+        if (!shadows[i]) goto cleanup;
+    }
+
+    for (int i = 0; i < k; i++) {
+        lsb_extract(carriers[i].pixels, shadows[i], shadow_len, lsb_count);
+    }
+    printf("[SSS] Sombras extraidas exitosamente.\n");
+
+    /* 7. Reservar buffer para pixeles recuperados */
+    uint32_t padded_len = shadow_len * (uint32_t)k;
+    recovered_pixels = malloc(padded_len);
+    if (!recovered_pixels) goto cleanup;
+
+    /* 8. Reconstruccion por bloques usando Lagrange Reducido */
+    for (uint32_t block = 0; block < shadow_len; block++) {
+        uint16_t x[10];
+        uint16_t y[10];
+        uint16_t coeffs[10];
+
+        for (int i = 0; i < k; i++) {
+            x[i] = shadow_indices[i];
+            y[i] = shadows[i][block];
+        }
+
+        for (int j = 0; j < k; j++) {
+            int num_points = k - j;
+            uint16_t a_j = 0;
+
+            for (int i = 0; i < num_points; i++) {
+                uint16_t num = 1;
+                uint16_t den = 1;
+                for (int m = 0; m < num_points; m++) {
+                    if (m == i) continue;
+                    uint16_t neg_xm = (uint16_t)((257 - x[m]) % 257);
+                    num = gf257_mul(num, neg_xm);
+                    den = gf257_mul(den, gf257_sub(x[i], x[m]));
+                }
+                uint16_t term = gf257_mul(y[i], gf257_div(num, den));
+                a_j = gf257_add(a_j, term);
+            }
+
+            coeffs[j] = a_j;
+
+            /* Reducir el grado para la proxima iteracion */
+            if (j < k - 1) {
+                for (int i = 0; i < num_points - 1; i++) {
+                    uint16_t num_val = gf257_sub(y[i], a_j);
+                    y[i] = gf257_div(num_val, x[i]);
+                }
+            }
+        }
+
+        for (int j = 0; j < k; j++) {
+            uint16_t val = coeffs[j];
+            if (val >= 256) {
+                val = 0;
+            }
+            recovered_pixels[block * (uint32_t)k + (uint32_t)j] = (uint8_t)val;
+        }
+    }
+
+    /* 9. Desaplicar mascara XOR (Permutacion inversa) */
+    permutation_xor_mask(recovered_pixels, M, seed);
+
+    /* 10. Clonar encabezado y construir BMP de salida */
+    secret_out.width = width;
+    secret_out.height = height;
+    secret_out.pixel_offset = carriers[0].pixel_offset;
+    secret_out.bits_per_pixel = carriers[0].bits_per_pixel;
+    secret_out.pixel_count = M;
+    secret_out.header_size = carriers[0].header_size;
+    memcpy(secret_out.header, carriers[0].header, carriers[0].header_size);
+
+    /* Limpiar metadatos en la cabecera restaurando valores originales */
+    bmp_set_seed(&secret_out, 0);
+    bmp_set_shadow_num(&secret_out, 0);
+
+    secret_out.pixels = malloc(M);
+    if (!secret_out.pixels) goto cleanup;
+    memcpy(secret_out.pixels, recovered_pixels, M);
+
+    /* 11. Guardar la imagen */
+    if (bmp_save(out_secret_path, &secret_out) != 0) {
+        fprintf(stderr, "sss: no se pudo guardar el secreto en '%s'.\n", out_secret_path);
+        goto cleanup;
+    }
+
+    printf("[SSS] Recuperacion completada exitosamente. Imagen guardada en '%s'.\n", out_secret_path);
+    ret = 0;
+
+cleanup:
+    bmp_free(&secret_out);
+    if (recovered_pixels) free(recovered_pixels);
+    if (shadows) {
+        for (int i = 0; i < k; i++) {
+            if (shadows[i]) free(shadows[i]);
+        }
+        free(shadows);
+    }
+    for (int i = 0; i < active_count; i++) {
+        bmp_free(&carriers[i]);
+    }
+    if (carrier_paths) {
+        for (int i = 0; i < carrier_count; i++) free(carrier_paths[i]);
+        free(carrier_paths);
+    }
+    return ret;
 }

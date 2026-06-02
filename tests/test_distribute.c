@@ -251,9 +251,114 @@ static void test_compression_ratio(void) {
     printf("Pruebas de Ratios de Compresion: PASS\n\n");
 }
 
+static void test_lagrange_recovery(void) {
+    printf("--- Prueba de Lagrange Reducido (GF(257)) ---\n");
+
+    /* Polinomio de ejemplo: P(x) = 50 + 51x + 55x^2  (k=3) */
+    /* Evaluado en x=1,2,3:
+     * x=1 -> y=156
+     * x=2 -> y=115
+     * x=3 -> y=184
+     */
+    uint16_t shadow_indices[] = {1, 2, 3};
+    uint16_t shadows[] = {156, 115, 184};
+    int k = 3;
+
+    uint16_t x[10];
+    uint16_t y[10];
+    uint16_t coeffs[10];
+
+    for (int i = 0; i < k; i++) {
+        x[i] = shadow_indices[i];
+        y[i] = shadows[i];
+    }
+
+    for (int j = 0; j < k; j++) {
+        int num_points = k - j;
+        uint16_t a_j = 0;
+
+        for (int i = 0; i < num_points; i++) {
+            uint16_t num = 1;
+            uint16_t den = 1;
+            for (int m = 0; m < num_points; m++) {
+                if (m == i) continue;
+                uint16_t neg_xm = (uint16_t)((257 - x[m]) % 257);
+                num = gf257_mul(num, neg_xm);
+                den = gf257_mul(den, gf257_sub(x[i], x[m]));
+            }
+            uint16_t term = gf257_mul(y[i], gf257_div(num, den));
+            a_j = gf257_add(a_j, term);
+        }
+
+        coeffs[j] = a_j;
+
+        if (j < k - 1) {
+            for (int i = 0; i < num_points - 1; i++) {
+                uint16_t num_val = gf257_sub(y[i], a_j);
+                y[i] = gf257_div(num_val, x[i]);
+            }
+        }
+    }
+
+    assert(coeffs[0] == 50);
+    assert(coeffs[1] == 51);
+    assert(coeffs[2] == 55);
+    printf("  Recuperacion de coeficientes para k=3: OK\n");
+
+    /* Caso k=8 */
+    {
+        uint16_t orig_coeffs[] = {10, 20, 30, 40, 50, 60, 70, 80};
+        uint16_t x_indices[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+        uint16_t y_vals[8];
+        for (int i = 0; i < 8; i++) {
+            y_vals[i] = poly_eval(orig_coeffs, 8, x_indices[i]);
+        }
+
+        uint16_t local_x[8];
+        uint16_t local_y[8];
+        uint16_t rec_coeffs[8];
+        for (int i = 0; i < 8; i++) {
+            local_x[i] = x_indices[i];
+            local_y[i] = y_vals[i];
+        }
+
+        for (int j = 0; j < 8; j++) {
+            int num_points = 8 - j;
+            uint16_t a_j = 0;
+            for (int i = 0; i < num_points; i++) {
+                uint16_t num = 1;
+                uint16_t den = 1;
+                for (int m = 0; m < num_points; m++) {
+                    if (m == i) continue;
+                    uint16_t neg_xm = (uint16_t)((257 - local_x[m]) % 257);
+                    num = gf257_mul(num, neg_xm);
+                    den = gf257_mul(den, gf257_sub(local_x[i], local_x[m]));
+                }
+                uint16_t term = gf257_mul(local_y[i], gf257_div(num, den));
+                a_j = gf257_add(a_j, term);
+            }
+            rec_coeffs[j] = a_j;
+
+            if (j < 7) {
+                for (int i = 0; i < num_points - 1; i++) {
+                    uint16_t num_val = gf257_sub(local_y[i], a_j);
+                    local_y[i] = gf257_div(num_val, local_x[i]);
+                }
+            }
+        }
+
+        for (int i = 0; i < 8; i++) {
+            assert(rec_coeffs[i] == orig_coeffs[i]);
+        }
+        printf("  Recuperacion de coeficientes para k=8: OK\n");
+    }
+
+    printf("Pruebas de Lagrange Reducido: PASS\n\n");
+}
+
 int main(void) {
     printf("===========================================\n");
-    printf("   EJECUTANDO PRUEBAS UNITARIAS - FASE 3   \n");
+    printf("   EJECUTANDO PRUEBAS UNITARIAS - FASE 3/4 \n");
     printf("===========================================\n\n");
 
     gf257_init();
@@ -262,6 +367,7 @@ int main(void) {
     test_lsb_roundtrip();
     test_256_mitigation();
     test_compression_ratio();
+    test_lagrange_recovery();
 
     printf("===========================================\n");
     printf("   ¡TODAS LAS PRUEBAS PASARON CON EXITO!  \n");

@@ -22,24 +22,7 @@ static void write_u16le(uint8_t *buf, uint16_t v) {
     buf[1] = (uint8_t)((v >> 8) & 0xFF);
 }
 
-/* ---- Reverse rows in-place (for bottom-up ↔ top-down conversion) ---- */
 
-static void reverse_rows(uint8_t *pixels, uint32_t width, uint32_t height) {
-    uint8_t *tmp = malloc(width);
-    if (!tmp) {
-        fprintf(stderr, "bmp: out of memory in reverse_rows\n");
-        return;
-    }
-    uint32_t row;
-    for (row = 0; row < height / 2; row++) {
-        uint8_t *top = pixels + row * width;
-        uint8_t *bot = pixels + (height - 1 - row) * width;
-        memcpy(tmp, top, width);
-        memcpy(top, bot, width);
-        memcpy(bot, tmp, width);
-    }
-    free(tmp);
-}
 
 /* ================================================================
  *  bmp_load
@@ -72,7 +55,7 @@ int bmp_load(const char *path, BMPImage *img) {
     uint32_t width        = read_u32le(hdr54 + 18);
     int32_t  height_raw   = (int32_t)read_u32le(hdr54 + 22);
     uint32_t height       = (uint32_t)(height_raw < 0 ? -height_raw : height_raw);
-    int      bottom_up    = (height_raw > 0); /* standard BMP = bottom-up */
+
 
     /* Validate */
     if (bpp != 8) {
@@ -129,10 +112,7 @@ int bmp_load(const char *path, BMPImage *img) {
     }
     fclose(f);
 
-    /* Convert bottom-up to top-down internally */
-    if (bottom_up) {
-        reverse_rows(pixels, width, height);
-    }
+    /* Row reversal is disabled to keep raw file order */
 
     /* Fill the struct */
     img->width        = width;
@@ -171,30 +151,13 @@ int bmp_save(const char *path, const BMPImage *img) {
         return -1;
     }
 
-    /* Determine if we need to write bottom-up.
-     * We check the height field in the stored header: if it's positive (or was
-     * positive originally) the file format expects bottom-up rows. */
-    int32_t height_raw = (int32_t)read_u32le(img->header + 22);
-    int bottom_up = (height_raw > 0);
 
-    if (bottom_up) {
-        /* Write rows in reverse order (bottom row first) */
-        uint32_t row;
-        for (row = img->height; row > 0; row--) {
-            const uint8_t *rowptr = img->pixels + (row - 1) * img->width;
-            if (fwrite(rowptr, 1, img->width, f) != img->width) {
-                fprintf(stderr, "bmp_save: error escribiendo fila %u en '%s'.\n", row - 1, path);
-                fclose(f);
-                return -1;
-            }
-        }
-    } else {
-        /* Top-down: write rows in order */
-        if (fwrite(img->pixels, 1, img->pixel_count, f) != img->pixel_count) {
-            fprintf(stderr, "bmp_save: error escribiendo pixeles en '%s'.\n", path);
-            fclose(f);
-            return -1;
-        }
+
+    /* Write pixels in raw file order directly without row reversal */
+    if (fwrite(img->pixels, 1, img->pixel_count, f) != img->pixel_count) {
+        fprintf(stderr, "bmp_save: error escribiendo pixeles en '%s'.\n", path);
+        fclose(f);
+        return -1;
     }
 
     fclose(f);

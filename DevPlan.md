@@ -62,19 +62,19 @@ Este plan desglosa cada fase en tareas específicas para C o Java, alineadas est
 **Objetivo:** Implementar la extracción y reconstrucción eficiente de la imagen secreta.
 
 ### Tareas:
-- [ ] **Extracción de Metadata y Sombras:**
-  - [ ] Leer los bytes 6 y 7 de cualquier portadora para obtener la semilla de permutación.
-  - [ ] Leer los bytes 8 y 9 de cada portadora para saber qué "sombra" ($x$) representa.
-  - [ ] Extraer los LSB del cuerpo del archivo BMP para recuperar los bytes de las sombras.
+- [x] **Extracción de Metadata y Sombras:**
+  - [x] Leer los bytes 6 y 7 de cualquier portadora para obtener la semilla de permutación.
+  - [x] Leer los bytes 8 y 9 de cada portadora para saber qué "sombra" ($x$) representa.
+  - [x] Extraer los LSB del cuerpo del archivo BMP para recuperar los bytes de las sombras.
 
-- [ ] **Resolución de Sistemas de Ecuaciones (Lagrange):**
-  - [ ] Implementar el método de Lagrange reducido, evaluado directamente en $x=0$.
-  - [ ] Trabajar numéricamente (sin llevar $x$ de forma simbólica).
-  - [ ] Algoritmo "encajado" (reducción iterativa): Encontrar $S_1$ (término independiente), restar ese valor a las sombras, dividir por $x$ (multiplicando por el inverso modular) para reducir el grado del polinomio, y repetir hasta obtener los $k$ coeficientes.
+- [x] **Resolución de Sistemas de Ecuaciones (Lagrange):**
+  - [x] Implementar el método de Lagrange reducido, evaluado directamente en $x=0$.
+  - [x] Trabajar numéricamente (sin llevar $x$ de forma simbólica).
+  - [x] Algoritmo "encajado" (reducción iterativa): Encontrar $S_1$ (término independiente), restar ese valor a las sombras, dividir por $x$ (multiplicando por el inverso modular) para reducir el grado del polinomio, y repetir hasta obtener los $k$ coeficientes.
 
-- [ ] **Reconstrucción:**
-  - [ ] Aplicar la permutación inversa (usando la semilla extraída) para reordenar los píxeles al formato original de la imagen secreta.
-  - [ ] Si $k=8$, clonar el encabezado de cualquiera de las imágenes portadoras para el archivo `.bmp` secreto recuperado.
+- [x] **Reconstrucción:**
+  - [x] Aplicar la permutación inversa (usando la semilla extraída) para reordenar los píxeles al formato original de la imagen secreta.
+  - [x] Si $k=8$, clonar el encabezado de cualquiera de las imágenes portadoras para el archivo `.bmp` secreto recuperado.
 
 ---
 
