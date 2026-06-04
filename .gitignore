@@ -10,3 +10,7 @@ tests/out_albert.bmp
 tests/carriers_test/
 tests/secret_test.bmp
 tests/recovered_secret.bmp
+recovered_*.bmp
+recovered_g5.bmp
+*.png
+*.jpg
