@@ -21,3 +21,6 @@ informe/*.log
 informe/*.out
 informe/*.toc
 informe/*.synctex.gz
+
+# e2e test working directories (regenerated on each run)
+tests/e2e/**/_work/
