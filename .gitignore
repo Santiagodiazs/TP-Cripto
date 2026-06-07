@@ -14,3 +14,10 @@ recovered_*.bmp
 recovered_g5.bmp
 *.png
 *.jpg
+
+# LaTeX intermediates (keep .tex and .pdf)
+informe/*.aux
+informe/*.log
+informe/*.out
+informe/*.toc
+informe/*.synctex.gz
