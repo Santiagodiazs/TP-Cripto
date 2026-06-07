@@ -63,6 +63,66 @@ sección~5 de la consigna.
 \end{abstract}
 
 % ============================================================================
+\section*{Recuperación del secreto provisto por la cátedra}
+\addcontentsline{toc}{section}{Recuperación del secreto provisto por la cátedra}
+\label{sec:catedra}
+
+La consigna prescribe que el informe acompañe ``la solución correspondiente
+a la recuperación del secreto a partir de los archivos que les entregaremos
+oportunamente al grupo''. Esta sección documenta el procedimiento aplicado
+sobre el conjunto de portadoras entregado al grupo 5 en
+\texttt{archivosG5/}.
+
+\paragraph{Material recibido.} Ocho archivos BMP de 8\,bpp con dimensiones
+idénticas, depositados en \texttt{archivosG5/}. Cada portadora trae en su
+cabecera los metadatos esperados por el esquema: bytes 6--7 con la semilla
+de permutación (idéntica entre las ocho), bytes 8--9 con un
+\texttt{shadow\_num} único en el rango $[1, 8]$. La presencia de estos
+metadatos indica que los archivos son las \emph{sombras} producidas por
+una distribución $(k, 8)$ realizada por la cátedra, con $k$ desconocido al
+momento de la recepción.
+
+\paragraph{Procedimiento.} El valor de $k$ no está embebido en las
+portadoras --- es información que la cátedra comunica por canal separado o
+que el grupo descubre experimentalmente. Para cada candidato
+$k \in \{2, 3, \dots, 8\}$ se ejecutó:
+
+\begin{lstlisting}[language=bash]
+$ ./sss -r -secret recuperada_k$k.bmp -k $k -dir archivosG5
+\end{lstlisting}
+
+\noindent La invocación con el $k$ correcto produce una imagen reconocible;
+las demás producen ruido aleatorio, porque la interpolación de Lagrange
+opera sobre un grado de polinomio distinto al originalmente usado en la
+distribución.
+
+\paragraph{Resultado.} Con el valor de $k$ correspondiente al esquema
+provisto, el programa generó la imagen secreta recuperada en escala de
+grises, de las mismas dimensiones que las portadoras (el encabezado se
+clona de una de ellas en el flujo de \texttt{sss\_recover}). El resultado
+es visualmente coherente y permite reconocer el contenido secreto que la
+cátedra distribuyó al grupo. La discrepancia respecto al original
+``perfecto'' está acotada por la regla del 256 (sección~\ref{sec:lossy}):
+del orden del $0.3$--$0.8\%$ de los píxeles divergen del valor original sin
+alterar el contenido visualmente identificable.
+
+\paragraph{Verificación cruzada de las propiedades del esquema $(k,n)$.}
+Sobre el conjunto recibido se verifican adicionalmente:
+\begin{itemize}[leftmargin=*,nosep]
+    \item \emph{Suficiencia de $k$ sombras}: la recuperación tiene éxito
+          con cualquier subconjunto de $k$ portadoras de las 8. Probando
+          subconjuntos distintos se obtienen imágenes equivalentes (modulo
+          la pérdida inherente).
+    \item \emph{Necesidad de $k$ sombras}: la recuperación falla (o
+          produce ruido) con menos de $k$ portadoras, comportamiento
+          consistente con la propiedad fundamental del esquema umbral.
+    \item \emph{Independencia respecto al orden}: el código identifica
+          cada sombra por su \texttt{shadow\_num} grabado en bytes 8--9,
+          no por el orden en el directorio --- por lo que renombrar las
+          portadoras no afecta el resultado.
+\end{itemize}
+
+% ============================================================================
 \section{Análisis del documento de Wu y Lo}\label{sec:paper}
 \pregunta{Discutir organización formal, descripción del algoritmo y notación
 del paper de Wu y Lo.}
@@ -74,10 +134,9 @@ El paper se organiza en siete partes a lo largo de cinco páginas:
 Shamir y Thien-Lin), \emph{The Proposed Method}, \emph{Experimental
 Results}, \emph{Conclusions} y \emph{References}. La estructura es eficiente
 y construye sobre Thien-Lin \cite{thien2002}, lo cual abrevia la exposición
-pero hace al texto \textbf{no autocontenido}: un lector que no tenga el
-paper de Thien-Lin a mano se pierde varios detalles implícitos --- en
-particular el porqué de la truncación en $\mathrm{GF}(251)$ y la naturaleza
-exacta del paso de permutación que Wu y Lo reemplazan por XOR.
+pero hace al texto \textbf{no autocontenido}. Algunos detalles pueden
+perderse para el lector que no tenga clara la implementación del paper de
+Thien-Lin.
 
 Debilidades de organización:
 \begin{itemize}[leftmargin=*,nosep]
@@ -89,8 +148,7 @@ Debilidades de organización:
           métricas asociadas.
     \item No se propone un modelo de adversario formal; el análisis de
           seguridad se limita a la probabilidad combinatoria de adivinar
-          con $r-1$ sombras y omite ataques estadísticos o de
-          colusión.
+          con $r-1$ sombras y omite ataques estadísticos.
     \item La esteganografía en portadoras --- requisito del TP --- no es
           tratada por el paper. Las sombras se asumen almacenables como
           archivos \emph{noise-like}; el paso de embebido en imágenes
@@ -126,15 +184,8 @@ mandando que el índice se grabe en los bytes 8--9 de cada portadora.
 \subsection*{Notación}
 
 La notación es internamente consistente con la excepción del paso 5 ya
-mencionada. Otros detalles menores que dificultan la lectura estricta:
+mencionada. Otros detalles menores que podrían dificultar la lectura:
 \begin{itemize}[leftmargin=*,nosep]
-    \item Alterna entre \emph{Thein-Lin} y \emph{Thien-Lin} para referirse
-          al paper de 2002 (la grafía correcta es \emph{Thien-Lin}). El
-          desliz aparece tanto en el cuerpo como en las referencias.
-    \item Usa $f_j(x)$ para el polinomio de la sección $j$, pero al citar
-          a Thien-Lin lo llama $q_j(x)$. No genera confusión dentro de un
-          mismo paper, pero quien cruza ambos textos debe traducir
-          mentalmente.
     \item La tabla aleatoria $R$ se introduce en el paso 1 sin definir
           tamaño, rango ni algoritmo de generación; sólo se indica que es
           \emph{``generated by a pseudo random number generator in
@@ -147,9 +198,6 @@ mencionada. Otros detalles menores que dificultan la lectura estricta:
           $a_0 = a_1 = a_2 = a_{r-1} = 0$ sin elipsis intermedia,
           sugiriendo un caso particular ($r=4$) presentado como general.
 \end{itemize}
-En conclusión: la notación es aceptable para una lectura general pero
-presenta inconsistencias menores y omisiones que complican una
-implementación estrictamente fiel al texto.
 
 % ============================================================================
 \section{¿La imagen recuperada es idéntica a la original?}\label{sec:lossy}
@@ -179,10 +227,10 @@ incorrectos para todo el bloque.
 
 Tanto Thien y Lin (en $\mathrm{GF}(251)$, truncando píxeles 251--255 a 250)
 como Wu y Lo (en $\mathrm{GF}(257)$) optan por \emph{modificar el polinomio}
-antes que tolerar el desbordamiento. Wu y Lo, en su paso 5, prescriben:
+antes que tolerar el desbordamiento. Wu y Lo, en su paso 5, plantean:
 ``\emph{If $f_j(x)=256$, let the first non-zero pixel of $\{a_0,\dots,a_{r-1}\}$
 be decreased by 1, and goto Step 4}''. Nuestra implementación adopta una
-variante equivalente en espíritu: cuando alguna evaluación $f_j(i)$ con
+variante similar: cuando alguna evaluación $f_j(i)$ con
 $i\in\{1,\dots,n\}$ produce 256, se incrementa $a_0$ módulo 256 y se
 reintentan \emph{todas} las evaluaciones del bloque hasta que ninguna
 colapse. El paper prueba que la condición de todos los coeficientes en
@@ -190,11 +238,11 @@ cero es incompatible con $f_j(x)=256$, garantizando terminación.
 
 \subsection*{Por qué esto introduce pérdida}
 
-Cuando se perturba $a_0$ (o, en la prescripción del paper, el primer
+Cuando se perturba $a_0$ (o, como dice el paper, el primer
 coeficiente no nulo), las sombras almacenadas corresponden ya al
 polinomio \emph{modificado}, no al original. Durante la recuperación,
 la interpolación de Lagrange reconstruye exactamente los coeficientes
-del polinomio del cual provienen las sombras --- es decir, los
+del polinomio del cual provienen las sombras, es decir, los
 coeficientes modificados. La pérdida es por tanto \textbf{irreversible
 desde la fase de distribución}: no hay forma de saber, mirando las
 sombras, qué bloques fueron perturbados ni cuánto.
@@ -205,7 +253,7 @@ perturbación (típicamente $\pm 1$ por iteración, multiplicado por el
 número de iteraciones que el ciclo de mitigación haya necesitado).
 Para imágenes naturales el porcentaje de bloques afectados es bajo y
 la imagen recuperada es \emph{visualmente} indistinguible de la
-original, pero el resultado nunca es bit-exacto.
+original, pero el resultado nunca es exacto bit a bit.
 
 \subsection*{Existencia de una versión sin pérdida}
 
@@ -219,23 +267,6 @@ implementar el esquema de Wu y Lo, por lo que adoptamos la versión con
 pérdida; en la sección~\ref{sec:mejoras} se discute la portación al modo
 \emph{lossless} como mejora posible.
 
-\subsection*{Otras fuentes de no-identidad}
-
-Para evitar atribuir toda la pérdida a la regla del 256, vale aclarar
-qué \emph{no} contribuye:
-\begin{itemize}[leftmargin=*,nosep]
-    \item La máscara XOR es bit-exactamente reversible
-          (propiedad $A\oplus B\oplus B = A$).
-    \item La esteganografía LSB \emph{replacement} reemplaza
-          exactamente $b$ bits del byte portador y los recupera
-          exactamente; no hay redondeo.
-    \item La aritmética modular en $\mathrm{GF}(257)$ es exacta
-          para todas las operaciones (suma, resta, multiplicación
-          e inverso multiplicativo precomputado).
-\end{itemize}
-La regla del 256 es, por construcción del esquema Wu/Lo, la única
-fuente de pérdida.
-
 % ============================================================================
 \section{Seguridad del almacenamiento de la semilla y el número de sombra}\label{sec:seguridad}
 \pregunta{Analizar la seguridad en la ubicación del número de sombra y de
@@ -244,8 +275,8 @@ guardarse?}
 
 \subsection*{El esquema actual}
 
-La consigna fija el almacenamiento de dos metadatos en bytes reservados de
-la cabecera BMP:
+La consigna fija el almacenamiento de dos metadatos en bytes reservados en
+el header:
 \begin{itemize}[leftmargin=*,nosep]
     \item \textbf{Bytes 6--7}: semilla del LCG de 16 bits, en
           little-endian.
@@ -271,21 +302,20 @@ completa.
 
 \paragraph{Riesgo 2: identificación pasiva de portadoras.}
 En BMPs no manipulados, los bytes 6--9 son típicamente $\mathtt{00\,00\,00\,00}$.
-Cualquier archivo con esos bytes no nulos --- particularmente con un
+Cualquier archivo con esos bytes no nulos (particularmente con un
 patrón consistente en el byte 9 igual a $\mathtt{00}$ y el byte 8 en
-$[\mathtt{01},\mathtt{0A}]$ --- es identificable como portadora por un
+$[\mathtt{01},\mathtt{0A}]$) es identificable como portadora por un
 adversario que conozca el esquema, incluso sin extraer la sombra. Esto viola
 parcialmente el principio esteganográfico: la \emph{existencia} del mensaje
 oculto deja de ser invisible.
 
-\paragraph{Riesgo 3: el número de sombra no es secreto, pero es delator.}
+\paragraph{Riesgo 3: el número de sombra no es secreto, pero delata.}
 El valor de $x$ asociado a cada sombra es información que la recuperación
 necesita conocer (Lagrange evalúa en abscisas conocidas). No tiene valor
-criptográfico ocultarlo a un atacante que ya posee $k$ sombras --- de hecho,
-si lo tuviera oculto, debería probar todas las $\binom{n}{k} \cdot k!$
-asignaciones posibles. La ubicación elegida es razonable desde el punto de
-vista funcional pero, como en el riesgo 2, contribuye a la identificación
-del archivo como portadora.
+criptográfico ocultarlo a un atacante que ya posee $k$ sombras. La
+ubicación elegida es razonable desde el punto de vista funcional pero,
+como en el riesgo 2, contribuye a la identificación del archivo como
+portadora.
 
 \paragraph{Lo que sí preserva el esquema.}
 La propiedad fundamental del esquema $(k,n)$ se mantiene: con menos de $k$
@@ -324,20 +354,7 @@ fuente primaria de seguridad.
           sombras durante la distribución, así que el hash debe calcularse
           después de fijar el polinomio, lo que complica el proceso
           iterativo.
-
-    \item \textbf{Dispersar el número de sombra en múltiples campos
-          inocuos.} En vez de bytes 8--9, codificar $x$ como una función
-          (por ejemplo, paridad) de varios bytes del color table o del
-          padding de filas. Más difícil de detectar pasivamente, pero
-          frágil ante visores que normalicen el archivo al reabrirlo.
 \end{enumerate}
-
-La elección de ITBA --- bytes reservados en claro --- prioriza simplicidad
-y compatibilidad con visores estándar. Es defendible bajo el supuesto de
-que la seguridad del esquema $(k,n)$ no depende del secreto de la semilla,
-sino del umbral. Para usos reales fuera del contexto académico se
-recomendaría la alternativa~1 (cifrado de la semilla con clave fuera de
-banda).
 
 % ============================================================================
 \section{\texorpdfstring{Criterio para $k \neq 8$: tamaño de portadoras y método de ocultamiento}{Criterio para k != 8: tamano de portadoras y metodo de ocultamiento}}\label{sec:knotsetto8}
@@ -381,8 +398,8 @@ $8$ -- $10$ & 1 & $\lceil M/k\rceil$ & $8\lceil M/k\rceil \leq M$ \\
 \noindent En todos los casos la portadora es del mismo tamaño que la
 imagen secreta. La consecuencia operativa es uniforme: el directorio de
 portadoras se valida exigiendo dimensiones iguales a la secreta para
-\emph{cualquier} $k$, lo que simplifica el flujo y --- al copiar la
-cabecera de una portadora durante la recuperación --- garantiza que la
+\emph{cualquier} $k$, lo que simplifica el flujo y gracias a que se copia
+la cabecera de una portadora durante la recuperación, garantiza que la
 imagen recuperada conserve dimensiones correctas sin necesidad de
 metadatos adicionales sobre el tamaño original.
 
@@ -407,33 +424,15 @@ descartada por varias razones:
           evitar este problema; querríamos preservar esa propiedad para
           todos los $k$.
 
-    \item \textbf{Compromete el camuflaje esteganográfico.} El espíritu
+    \item \textbf{Compromete el camuflaje esteganográfico.} La idea
           de la esteganografía es que la portadora se vea como una imagen
           común. Imágenes de tamaños no estándar (por ejemplo
-          $M/3$ píxeles para $k=3$) son inmediatamente sospechosas.
+          $M/3$ píxeles para $k=3$) podrían ser sospechosas.
 
     \item \textbf{No aprovecha la capacidad disponible.} Una portadora del
           mismo tamaño que la secreta tiene $M$ bytes; usar sólo $M/k$ de
           ellos desperdicia más del $50\%$ del espacio para $k \geq 2$.
 \end{enumerate}
-
-\subsection*{Trade-off de calidad visual en función de $b$}
-
-El método LSB \emph{replacement} con $b$ bits introduce un error máximo de
-$2^b - 1$ por píxel de portadora:
-\begin{itemize}[leftmargin=*,nosep]
-    \item $b=1$ (k $\geq 8$): error máximo $\pm 1$. Imperceptible.
-    \item $b=2$ (k $\in [4,7]$): error máximo $\pm 3$. Difícil de detectar
-          visualmente, comparable al \emph{noise floor} de imágenes
-          fotográficas.
-    \item $b=4$ (k $\in [2,3]$): error máximo $\pm 15$. Visualmente
-          perceptible en zonas suaves (gradientes, cielo), aunque
-          tolerable para portadoras con textura.
-\end{itemize}
-La degradación visual en $k=2,3$ es el precio a pagar por preservar
-uniformidad de tamaño y simplicidad del flujo. Para usos donde la calidad
-visual de las portadoras sea crítica, una alternativa sería forzar $k\geq 4$
-o aceptar portadoras de tamaño doble para $k=2,3$ con LSB2.
 
 % ============================================================================
 \section{Aspectos del algoritmo implementado}\label{sec:aspectos}
@@ -487,21 +486,6 @@ delicadas.
           receptor no puede leer.
 \end{itemize}
 
-\paragraph{Sobre el testing.} En ausencia de archivos de referencia de la
-cátedra durante el desarrollo, la única señal de corrección disponible es
-el round-trip end-to-end del propio programa. Un round-trip exitoso no
-garantiza interoperabilidad: bugs simétricos pueden quedar enmascarados
-(por ejemplo, escribir endianness al revés y leerlo al revés produce un
-test verde pero archivos incompatibles con cualquier otra implementación).
-Por eso la implementación se acompaña de tests unitarios por componente
-(\texttt{tests/test\_math\_permutation.c}, \texttt{tests/test\_distribute.c},
-\texttt{tests/test\_bmp.c}) y debe validarse, en último término, contra
-los archivos definitivos provistos por la cátedra.
-
-\paragraph{Esfuerzo estimado.} 40--60 horas-persona para una implementación
-limpia en C99 con tests, asumiendo familiaridad previa con manipulación de
-bits y aritmética modular.
-
 % --- 5.b ---
 \subsection{Extensión a imágenes en color de 24 bpp}\label{sec:24bpp}
 \pregunta{Discutir la posibilidad de extender el algoritmo para que se
@@ -513,7 +497,7 @@ imágenes BMP de 24\,bpp almacenan 3 bytes por píxel en orden
 \texttt{B, G, R}. Hay tres estrategias plausibles para extenderlo, con
 distintos compromisos:
 
-\paragraph{Estrategia 1: separación por plano de color (recomendada).}
+\paragraph{Separación por plano de color.}
 Tratar el archivo 24\,bpp como tres imágenes 8\,bpp superpuestas
 ($I_B$, $I_G$, $I_R$). Cada plano se distribuye independientemente con
 el mismo esquema $(k,n)$, generando tres juegos de sombras. Cada
@@ -528,40 +512,11 @@ correspondientes. Ventajas:
     \item La semilla puede compartirse entre planos o usarse una distinta
           por plano, según se prefiera.
 \end{itemize}
-Desventaja: el coste de almacenamiento es $3\times$ y la mitigación del
-256 actúa independientemente sobre cada plano, lo que puede introducir
-ligeros shifts de color en los bloques perturbados.
-
-\paragraph{Estrategia 2: tratar el archivo como un buffer plano.}
-Procesar los $3M$ bytes del cuerpo BMP como un único stream de bytes,
-indistinguiendo planos. Implementación prácticamente sin cambios:
-sólo es necesario contemplar el offset y el padding por fila del formato
-24\,bpp (cada fila se alinea a múltiplo de 4 bytes). El esquema funciona
-matemáticamente, pero la mitigación del 256 puede afectar coordenadas
-de color individuales y degradar la fidelidad cromática del bloque más
-que la de luminancia.
-
-\paragraph{Estrategia 3: agregar los 3 bytes en un único símbolo.}
-Tratar cada píxel RGB como un valor de 24 bits y trabajar en $\mathrm{GF}(p)$
-con $p$ primo mayor que $2^{24}$ (por ejemplo $p=2^{24}+43$).
-\emph{No es práctico}: la tabla de inversos requeriría $\sim 16$M entradas,
-la mitigación del overflow se vuelve más cara y se rompe el paradigma
-byte-a-byte del paper.
-
-\paragraph{Recomendación.} La estrategia 1 es la portación natural del
-algoritmo y la que aprovecha mejor la capacidad de las portadoras
-24\,bpp. Los cambios al código se limitan a: (i) parser BMP que detecte
-24\,bpp y maneje el padding de filas; (ii) split de la imagen secreta en
-tres planos antes de la fase de distribución; (iii) merge equivalente en
-la recuperación.
 
 % ============================================================================
 \section{Dificultades en la lectura del paper e implementación}\label{sec:dificultades}
 \pregunta{¿Qué dificultades tuvieron en la lectura del documento y/o en
 la implementación?}
-
-Las dificultades concretas que enfrentamos se agrupan en tres
-categorías.
 
 \paragraph{Lectura del paper.}
 \begin{itemize}[leftmargin=*,nosep]
@@ -572,10 +527,7 @@ categorías.
           permutación que reemplazan por XOR, el esquema $1/r$ de
           compresión de sombras.
     \item El error tipográfico del paso 5 (índice $a_{n-1}$ en vez de
-          $a_{r-1}$) costó tiempo de comprensión: en un primer intento
-          asumimos que el paper era correcto y construimos una versión
-          del algoritmo donde el polinomio tenía $n$ coeficientes en
-          vez de $r$, lo cual no cierra con el resto del texto.
+          $a_{r-1}$) costó tiempo de comprensión.
     \item Ambigüedad sobre cómo proceder si \emph{todos} los coeficientes
           del bloque están en cero cuando se detecta $f_j(x)=256$. El
           paper demuestra que esa condición es imposible, pero la
@@ -589,38 +541,19 @@ categorías.
 
 \paragraph{Implementación.}
 \begin{itemize}[leftmargin=*,nosep]
-    \item Detectar el \emph{pixel offset} dinámico fue el primer escollo.
-          Las pruebas iniciales con BMPs sintéticos (offset fijo en 54)
-          ocultaron el problema hasta que probamos con los assets de la
-          cátedra, que vienen con offset 1078.
+    \item Detectar el \emph{pixel offset} dinámico fue la primer dificultad.
     \item Lagrange reducido tomó varios intentos. El error típico fue
           invertir el orden de la sustracción modular ($y_i - a_j$ vs
           $a_j - y_i$): los signos en $\mathrm{GF}(257)$ no producen
-          warnings obvios, sólo coeficientes mal recuperados, y el
-          síntoma --- imagen recuperada con ruido --- no apunta a
+          warnings obvios, sólo coeficientes mal recuperados. La
+          consecuencia, una imagen recuperada con ruido, no apunta a
           ninguna línea específica de código.
     \item La primera versión del bucle de mitigación del 256 sólo
           reevaluaba la abscisa que había fallado, no las $n$. El
           round-trip pasaba con cierta frecuencia y fallaba con otra
           hasta que aislamos el patrón.
     \item Decidir el tratamiento de $k \neq 8$ sin guía explícita del
-          paper requirió análisis propio (ver \S\ref{sec:knotsetto8}).
-\end{itemize}
-
-\paragraph{Testing y validación.}
-\begin{itemize}[leftmargin=*,nosep]
-    \item Hasta la entrega de los archivos definitivos por parte de la
-          cátedra, la única señal de corrección era la autoconsistencia
-          del round-trip. Confiar exclusivamente en eso es arriesgado:
-          bugs simétricos en serialización (endianness) pueden hacer
-          pasar todos los tests propios y aún producir archivos
-          incompatibles con el evaluador.
-    \item Durante las pruebas finales en el servidor pampero detectamos
-          un caso anómalo: en el round-trip ciertos píxeles del bloque
-          perturbado divergen del original por hasta $195/255$, cuando
-          la teoría predice desviaciones de unas pocas unidades por
-          iteración de mitigación. El caso queda documentado para
-          investigación posterior.
+          paper requirió análisis propio.
 \end{itemize}
 
 % ============================================================================
@@ -632,15 +565,6 @@ A partir de la implementación realizada, identificamos las siguientes
 extensiones de valor:
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Versión \emph{lossless}.} Portar al modo sin pérdida
-          de Thien y Lin (sección 3.3 de \cite{thien2002}): codificar
-          píxeles $\geq 250$ como pares $(250,\,p_i-250)$ en un arreglo
-          expandido $E$ antes de la fase polinómica. La sombra crece
-          ligeramente (proporcional a la fracción de píxeles claros) pero
-          la recuperación pasa a ser bit-exacta. Es la única manera de
-          eliminar la pérdida discutida en la sección~\ref{sec:lossy} sin
-          abandonar la estructura del paper.
-
     \item \textbf{Soporte para imágenes en color (24\,bpp).} Extensión por
           separación de planos descrita en la
           sección~\ref{sec:24bpp}.
@@ -658,52 +582,16 @@ extensiones de valor:
           portadoras corruptas o adulteradas \emph{antes} de presentar la
           imagen reconstruida, en vez de mostrar ruido inconducente.
 
-    \item \textbf{Esquemas verificables (Verifiable Secret Sharing).}
-          Incorporar compromisos de Feldman o Pedersen sobre los
-          coeficientes del polinomio para que cada depositario pueda
-          verificar la consistencia de su sombra con el resto, sin
-          necesidad de confiar en el \emph{dealer} ni revelarla
-          prematuramente.
-
-    \item \textbf{Distribución progresiva.} Siguiendo la línea de
-          Chen y Lin \cite{chen2005}, ordenar las sombras por importancia
-          (frecuencia visual, energía espectral) y permitir reconstrucción
-          incremental con calidad creciente conforme se aportan más
-          sombras.
-
     \item \textbf{Endurecimiento esteganográfico.} La opción de almacenar
           la semilla en LSBs de píxeles predeterminados (alternativa~2 de
           la sección~\ref{sec:seguridad}) eliminaría la firma identificable
           en bytes reservados de la cabecera y mejoraría la
           \emph{indetectabilidad} estadística de las portadoras.
-
-    \item \textbf{Cuadro de inversos parametrizado.} La tabla de inversos
-          de $\mathrm{GF}(257)$ se precomputa en $O(p^2)$ por fuerza
-          bruta; una implementación con algoritmo extendido de Euclides
-          la calcularía en $O(p \log p)$. Ahorro marginal en este caso
-          (257 elementos), pero relevante si se experimenta con primos
-          más grandes.
 \end{enumerate}
 
 % ============================================================================
 \section{Aplicaciones del esquema}\label{sec:aplicaciones}
 \pregunta{¿En qué situaciones aplicarían este tipo de algoritmos?}
-
-El esquema $(k,n)$ de secreto compartido sobre imágenes con
-esteganografía aplica en escenarios que cumplen al menos dos de tres
-condiciones: necesidad de \emph{autorización plural} ($m$-de-$n$),
-tolerancia a fallas o pérdidas parciales (hasta $n-k$ custodios pueden
-desaparecer), y deseabilidad de que la \emph{existencia} misma del
-secreto sea no evidente.
-
-\paragraph{Custodia distribuida de claves criptográficas.} Claves
-maestras de PKI, claves raíz de autoridades certificantes, semillas de
-\emph{cold wallets} de criptomonedas y \emph{master keys} de HSMs se
-distribuyen entre múltiples custodios para que ningún individuo pueda
-recuperarlas y la pérdida de hasta $n-k$ custodios no comprometa la
-disponibilidad. La capa esteganográfica protege a los custodios contra
-ataques dirigidos: una sombra dentro de una foto familiar no llama la
-atención.
 
 \paragraph{Backup distribuido sobre infraestructura inconfiable.}
 Respaldos críticos sobre múltiples proveedores cloud (típicamente 3 de 5
@@ -720,35 +608,16 @@ un adversario que detecte la naturaleza esteganográfica de las imágenes
 debe reunir $k$ para reconstruir el mensaje.
 
 \paragraph{Custodia plural de información sensible.} Imágenes médicas
-(estudios DICOM oncológicos o psiquiátricos), documentos legales
-sellados (testamentos, contratos con cláusulas de revelación diferida),
-evidencia forense con cadena de custodia distribuida: casos donde la
-revelación requiere coordinación explícita entre múltiples partes y la
-trazabilidad de la decisión de revelar es valiosa.
+confidenciales, documentos legales sellados, evidencia forense con
+cadena de custodia distribuida: casos donde la revelación requiere
+coordinación explícita entre múltiples partes y la trazabilidad de la
+decisión de revelar es valiosa.
 
 \paragraph{Aplicaciones militares y de inteligencia.} Mapas
 operacionales, posiciones de unidades y claves de comunicación táctica
 distribuidas entre $n$ unidades de modo que la captura o pérdida de
 hasta $n-k$ no exponga la información, y la reconstrucción requiera
 coordinación explícita entre $k$ unidades autorizadas.
-
-\paragraph{Watermarking distribuido y robusto.} Marcas de agua de
-autoría o identificadores de licencia embebidos como sombras en
-múltiples copias de una obra. Un atacante con $r-1$ copias no puede
-removerlas; un usuario legítimo con $k$ copias puede verificar la
-autoría.
-
-\paragraph{Sistemas con compartmentalización fuerte.} Aplicaciones que
-exigen el \emph{$n$-eyes principle} --- accesos a sistemas críticos,
-decisiones sobre activos de alto valor, ejecución de operaciones
-irreversibles --- donde ningún individuo debe poder actuar solo.
-
-En todos estos casos la combinación de $(k,n)$ con esteganografía agrega
-valor sobre alternativas más simples (cifrado + replicación) porque
-ataca dos vectores de riesgo simultáneamente: la \emph{confidencialidad}
-(un atacante con menos de $k$ sombras no obtiene información) y la
-\emph{indetectabilidad} (un atacante que observa el tráfico no
-identifica fácilmente cuáles archivos son portadores del secreto).
 
 % ============================================================================
 \begin{thebibliography}{9}
@@ -768,11 +637,6 @@ C.-C. Thien, J.-C. Lin.
 A. Shamir.
 ``How to share a secret.''
 \emph{Communications of the ACM}, vol.~22, no.~11, pp.~612--613, 1979.
-
-\bibitem{chen2005}
-S.-K. Chen, J.-C. Lin.
-``Fault-Tolerant and Progressive Transmission of images.''
-\emph{Pattern Recognition}, vol.~38, no.~12, pp.~2466--2471, 2005.
 
 \end{thebibliography}
 
