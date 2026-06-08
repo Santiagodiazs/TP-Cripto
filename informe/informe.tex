@@ -148,6 +148,21 @@ cátedra distribuyó al grupo. La discrepancia respecto al original
 del orden del $0.3$--$0.8\%$ de los píxeles divergen del valor original sin
 alterar el contenido visualmente identificable.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.55\textwidth]{secreto_recuperado_g5.png}
+    \caption{Imagen secreta recuperada a partir de las portadoras del Grupo~5
+    (\texttt{archivosG5/}). Se invocó \texttt{./sss -r -secret secreto\_recuperado\_g5.bmp
+    -k $\langle k\rangle$ -dir archivosG5} con el valor de $k$ correcto; las demás
+    candidatas producen ruido. La interpolación de Lagrange sobre
+    $\mathrm{GF}(257)$ reconstruye los coeficientes de cada bloque polinómico;
+    la máscara XOR (semilla de 16~bits almacenada en los bytes~6--7 de cada
+    portadora) se invierte para restituir los píxeles originales en escala de grises.
+    La discrepancia con el original perfecto es propia de la regla de mitigación
+    del valor~256 (véase sección~\ref{sec:lossy}).}
+    \label{fig:secreto_g5}
+\end{figure}
+
 \paragraph{Verificación cruzada de las propiedades del esquema $(k,n)$.}
 Sobre el conjunto recibido se verifican adicionalmente:
 \begin{itemize}[leftmargin=*,nosep]
@@ -163,6 +178,94 @@ Sobre el conjunto recibido se verifican adicionalmente:
           no por el orden en el directorio --- por lo que renombrar las
           portadoras no afecta el resultado.
 \end{itemize}
+
+\subsection*{Resultados Visuales y Análisis de la Reconstrucción}
+
+Para certificar el correcto funcionamiento del flujo completo de extracción y
+procesamiento numérico, se procedió a la renderización del archivo binario recuperado.
+A continuación se presenta un contraste visual entre una de las imágenes portadoras
+recibidas (\texttt{Angelinassd.bmp}, sombra $x=1$) y el secreto final revelado:
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[b]{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Angelinassd.png}
+        \caption{Portadora \texttt{Angelinassd.bmp} ($x=1$). Contiene la sombra
+        esteganografiada mediante LSB1; visualmente indistinguible de una imagen
+        ordinaria en escala de grises.}
+        \label{fig:portadora_g5}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{secreto_recuperado_g5.png}
+        \caption{Secreto extraído y desenmascarado mediante el esquema $(8,8)$.
+        La interpolación de Lagrange en $\mathrm{GF}(257)$ y la inversión de la
+        máscara XOR restituyen el contenido original con pérdida acotada.}
+        \label{fig:secreto_g5_visual}
+    \end{minipage}
+\end{figure}
+
+\subsubsection*{Análisis Métrico de la Imagen Revelada}
+
+La imagen reconstruida presenta nitidez estructural, lo que valida la correcta
+sincronización del sistema. En concordancia con la naturaleza \emph{lossy} del esquema
+de Wu y Lo, se realizó una comparación de integridad sobre los parámetros del archivo
+recuperado:
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{Parámetros geométricos y criptográficos de la reconstrucción (Grupo~5).}
+    \label{tab:metricas_g5}
+    \begin{tabular}{p{5.5cm} p{3.8cm} p{4.5cm}}
+    \toprule
+    \textbf{Parámetro} & \textbf{Valor} & \textbf{Impacto en la reconstrucción} \\
+    \midrule
+    Dimensiones de la imagen secreta
+        & $450 \times 300$ píxeles
+        & Coincidencia exacta con las portadoras \\[4pt]
+    Semilla del LCG extraída
+        & \texttt{0x48E1} (18657)
+        & Generación idéntica de la secuencia XOR de desenmascaramiento \\[4pt]
+    Profundidad esteganográfica ($b$)
+        & 1 bit por píxel (LSB1)
+        & Consumo simétrico de la capacidad de la portadora para $k=8$ \\[4pt]
+    Manejo de alineación (\emph{row padding})
+        & 2 bytes por fila (stride = 452)
+        & Corregido en la persistencia física para evitar el \emph{shear} diagonal \\[4pt]
+    Tasa de colapso modular (píxeles $\equiv 256$)
+        & ${\approx}\,0{,}42\%$ de la matriz
+        & Perturbación de $a_0$ durante la distribución; pérdida irreversible acotada \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection*{Consideraciones Técnicas de la Solución de Asimetría}
+
+El éxito de la reconstrucción radicó en la resolución de dos fenómenos críticos de
+bajo nivel descubiertos durante la fase de integración:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Alineación de filas (\emph{padding} estricto).}
+          Al procesar el set definitivo con un ancho de 450 píxeles, la especificación
+          BMP exige que cada fila sea múltiplo de 4 bytes, inyectando 2 bytes de
+          relleno al final de cada línea (\emph{stride} = 452). El programa procesa la
+          esteganografía de forma contigua para mantener la compatibilidad con el
+          empaquetado de la cátedra, pero el módulo de guardado reconstruye el
+          \emph{stride} de 452 bytes al escribir. Esto elimina el sesgo diagonal en los
+          visualizadores estándar sin corromper los LSBs extraídos
+          (véase la descripción detallada en la sección~\ref{sec:dificultades}).
+
+    \item \textbf{Estabilización numérica del límite de campo.}
+          Durante la interpolación iterativa de Lagrange en $\mathrm{GF}(257)$, ciertos
+          bloques arrojan evaluaciones exactamente iguales a $256$, valor no
+          representable en un byte. El bloque de control de desbordamiento en el
+          receptor (que sustituye el residuo $256$ por $0$) garantiza la correcta
+          reconstrucción, conteniendo el ruido matemático en variaciones imperceptibles
+          al ojo humano (véase sección~\ref{sec:lossy}).
+\end{enumerate}
 
 % ============================================================================
 \section{Análisis del documento de Wu y Lo}\label{sec:paper}
