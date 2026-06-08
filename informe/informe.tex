@@ -10,6 +10,7 @@
 \usepackage{xcolor}
 \usepackage{enumitem}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -41,14 +42,55 @@
 
 \newcommand{\stub}[1]{\textit{\textcolor{gray!60!black}{[Pendiente: #1]}}}
 
-\title{\vspace{-1.5cm}\textbf{Trabajo Práctico de Implementación}\\[4pt]
-       \large Secreto Compartido en Imágenes con Esteganografía\\[8pt]
-       \normalsize Criptografía y Seguridad (72.04) --- 2026}
-\author{Grupo 5}
-\date{\today}
-
 \begin{document}
-\maketitle
+
+% ============================================================================
+%  Carátula
+% ============================================================================
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+
+\includegraphics[width=0.55\textwidth]{itba-logo.png}
+
+\vspace{2.5cm}
+
+{\Large Criptografía y Seguridad (72.04) --- 2026\par}
+\vspace{0.4cm}
+{\large Trabajo Práctico de Implementación\par}
+
+\vspace{1.5cm}
+
+\rule{0.85\textwidth}{0.4pt}
+\vspace{0.6cm}
+
+{\huge\bfseries Secreto Compartido en Imágenes\\[6pt]
+con Esteganografía\par}
+
+\vspace{0.6cm}
+\rule{0.85\textwidth}{0.4pt}
+
+\vfill
+
+{\Large\bfseries Grupo 5\par}
+\vspace{0.8cm}
+
+\begin{tabular}{lr}
+\toprule
+\textbf{Integrante} & \textbf{Legajo} \\
+\midrule
+Lucila Borinsky     & 63039 \\
+Santiago Diaz       & 63058 \\
+Tomas Pinausig      & 63167 \\
+Katia Menshikoff    & 64396 \\
+\bottomrule
+\end{tabular}
+
+\vfill
+
+{\large \today\par}
+
+\end{titlepage}
 
 \begin{abstract}
 \noindent Se implementó en lenguaje C el esquema de secreto compartido en imágenes
