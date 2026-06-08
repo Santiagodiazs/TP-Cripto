@@ -22,3 +22,6 @@ informe/*.log
 informe/*.out
 informe/*.toc
 informe/*.synctex.gz
+informe/correcciones.txt
+.DS_Store
+**/.DS_Store
