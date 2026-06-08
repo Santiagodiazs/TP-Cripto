@@ -474,6 +474,10 @@ int sss_recover(const Args *args) {
         for (int j = 0; j < k; j++) {
             uint16_t val = coeffs[j];
             if (val >= 256) {
+                fprintf(stderr,
+                    "[SSS] Advertencia: coeficiente recuperado fuera de rango "
+                    "(bloque=%u, coef=%d, val=%u). Clampeando a 0.\n",
+                    block, j, val);
                 val = 0;
             }
             recovered_pixels[block * (uint32_t)k + (uint32_t)j] = (uint8_t)val;
