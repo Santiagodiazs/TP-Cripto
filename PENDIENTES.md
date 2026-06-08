@@ -7,14 +7,11 @@ de pulido y mejoras post-entrega.
 
 ---
 
-## 🚨 Críticos para la entrega
+## 🚨 Críticos para la entrega — TODO HECHO ✅
 
-- [ ] **Fecha de entrega: 8 de junio.** Hoy 2026-06-07 (mañana).
-- [ ] **Última verificación en pampero** justo antes de entregar:
-  - `git pull origin main` en pampero.
-  - `make clean && make` debe compilar sin warnings con `gcc 16.1.1` (ya verificado).
-  - `./sss -r -secret out.bmp -k 8 -dir archivosG5/` debe producir el BMP de
-    136 678 bytes con la Torre Eiffel sin shear (ya verificado vía SSH).
+- [x] **Verificación final en pampero** completada por el grupo. Compila sin
+  warnings y recupera correctamente la imagen secreta.
+- [x] **Entrega**: realizada.
 
 ---
 
