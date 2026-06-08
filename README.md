@@ -12,7 +12,7 @@ make debug      # produce 'sss_dbg' con logs de depuración
 make clean      # elimina objetos y ejecutables
 ```
 
-Probado con gcc ≥ 9, C99, sin warnings.
+Probado con gcc ≥ 9, C99, sin warnings
 
 ---
 
