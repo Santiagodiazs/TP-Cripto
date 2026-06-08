@@ -153,11 +153,59 @@ int bmp_save(const char *path, const BMPImage *img) {
 
 
 
-    /* Write pixels in raw file order directly without row reversal */
-    if (fwrite(img->pixels, 1, img->pixel_count, f) != img->pixel_count) {
-        fprintf(stderr, "bmp_save: error escribiendo pixeles en '%s'.\n", path);
-        fclose(f);
-        return -1;
+    /* BMP requiere que cada fila quede padeada a un múltiplo de 4 bytes.
+     * El padding sólo se inserta al escribir; bmp_load sigue leyendo el
+     * área de píxeles como buffer contiguo (esa es la convención sobre
+     * la que opera el LSB replacement del esquema Wu/Lo, y romperla
+     * destruiría la interoperabilidad con sombras de otras
+     * implementaciones).
+     *
+     * El buffer `img->pixels` contiene los `width*height` bytes que están
+     * en el área de píxeles del archivo de origen, contiguos. Cuando el
+     * width no es múltiplo de 4 esa vista contigua incluye los bytes de
+     * padding entremezclados cada `width` posiciones --- es decir, la
+     * "stride efectiva" del buffer es `width + row_pad`. Al escribir hay
+     * que recorrer el buffer en pasos de `stride` para reproducir el
+     * layout BMP estándar y que cualquier visor renderice las filas
+     * alineadas. */
+    uint32_t row_pad = (4 - (img->width % 4)) % 4;
+    uint32_t stride  = img->width + row_pad;
+    static const uint8_t zero_pad[3] = {0, 0, 0};
+
+    for (uint32_t row = 0; row < img->height; row++) {
+        size_t row_start = (size_t)row * (size_t)stride;
+        size_t available = (row_start < img->pixel_count)
+                             ? img->pixel_count - row_start
+                             : 0;
+        size_t to_write  = available < img->width ? available : img->width;
+
+        if (to_write > 0) {
+            if (fwrite(img->pixels + row_start, 1, to_write, f) != to_write) {
+                fprintf(stderr, "bmp_save: error escribiendo fila %u en '%s'.\n", row, path);
+                fclose(f);
+                return -1;
+            }
+        }
+        /* Si la fila quedó corta por buffer insuficiente (caso de las
+         * últimas filas al recuperar un secreto con width no divisible
+         * por 4, donde el buffer de width*height bytes no llega a cubrir
+         * todas las filas con stride padeada), rellenar con ceros. */
+        if (to_write < img->width) {
+            size_t missing = img->width - to_write;
+            for (size_t i = 0; i < missing; i++) {
+                if (fputc(0, f) == EOF) {
+                    fprintf(stderr, "bmp_save: error rellenando fila %u en '%s'.\n", row, path);
+                    fclose(f);
+                    return -1;
+                }
+            }
+        }
+        if (row_pad > 0 &&
+            fwrite(zero_pad, 1, row_pad, f) != row_pad) {
+            fprintf(stderr, "bmp_save: error escribiendo padding de fila %u en '%s'.\n", row, path);
+            fclose(f);
+            return -1;
+        }
     }
 
     fclose(f);

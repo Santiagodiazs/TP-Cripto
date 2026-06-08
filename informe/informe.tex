@@ -508,7 +508,20 @@ delicadas.
           dinámico: 54 para BMPs mínimos, pero 1078 para BMPs de 8\,bpp
           con tabla de colores completa ($54 + 256\cdot 4$). Asumir 54
           funciona en pruebas casuales y falla en producción.
-          Adicionalmente: padding de filas a múltiplos de 4 bytes, altura
+          BMP exige además que cada fila quede padeada a un múltiplo de
+          4 bytes, lo cual fuerza un manejo \emph{asimétrico}: al escribir
+          (\texttt{bmp\_save}) hay que insertar los bytes de padding por
+          fila para que cualquier visor estándar renderice las filas
+          alineadas, mientras que al leer (\texttt{bmp\_load}) se mantiene
+          la lectura del área de píxeles como buffer contiguo de
+          $\text{width} \times \text{height}$ bytes, porque ésa es la
+          vista sobre la que el LSB replacement del esquema opera y
+          romperla impediría interoperar con sombras producidas por otras
+          implementaciones del mismo TP. Para anchos divisibles por 4
+          (caso típico, e.g.\ las portadoras 300$\times$300 de prueba)
+          ambos modos coinciden; el padding sólo entra en juego con
+          anchos no divisibles por 4 como los 450$\times$300 del set
+          definitivo del grupo. Otros aspectos a tener en cuenta: altura
           potencialmente negativa (bottom-up vs top-down) y endianness en
           los campos del encabezado.
     \item \textbf{Lagrange reducido numérico.} Conceptualmente simple
@@ -596,6 +609,26 @@ la implementación?}
           hasta que aislamos el patrón.
     \item Decidir el tratamiento de $k \neq 8$ sin guía explícita del
           paper requirió análisis propio.
+    \item Asimetría en el manejo del padding de fila de BMP. Las
+          portadoras del set definitivo del grupo son de
+          450$\times$300 (ancho no divisible por 4, $450 \bmod 4 = 2$),
+          y el primer round-trip producía un \emph{shear} diagonal
+          pronunciado al abrir la imagen recuperada en un visor.
+          El problema no se manifestaba en los tests con fixtures de
+          300$\times$300 (ancho divisible por 4, sin padding). El
+          diagnóstico se complicó porque una primera resolución que
+          también agregaba \emph{padding-aware} a \texttt{bmp\_load}
+          rompió la interoperabilidad: las sombras de la cátedra están
+          encodeadas sobre la vista contigua del área de píxeles
+          (incluyendo los bytes de padding como si fueran data), así
+          que la lectura debe permanecer contigua. La resolución
+          correcta toca sólo el side de escritura: \texttt{bmp\_save}
+          recorre el buffer en pasos de
+          $\text{stride} = \text{width} + \text{row\_pad}$ y escribe
+          cada fila como $\text{width}$ bytes de píxel más
+          $\text{row\_pad}$ ceros de padding, reproduciendo el layout
+          BMP estándar sin alterar la convención sobre la que opera
+          el LSB.
 \end{itemize}
 
 % ============================================================================
